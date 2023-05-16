@@ -4,6 +4,8 @@ import pkg_resources
 
 
 class PackageVersionTest(unittest.TestCase):
+    NOT_INSTALLED = "not installed"
+
     def test_versions(self):
         required_versions = {
             "numpy": "1.22.3",
@@ -24,14 +26,11 @@ class PackageVersionTest(unittest.TestCase):
             try:
                 installed_versions[p] = pkg_resources.get_distribution(p).version
             except pkg_resources.DistributionNotFound:
-                installed_versions[p] = "Not installed!"
+                installed_versions[p] = self.NOT_INSTALLED
 
-        # for p, v in required_versions.items():
-        #     if not installed_versions[p] >= v:
-        #         raise Exception(f"Version of {p} is {installed_versions[p]}, but should be at least {v}.")
-
-        msg = "    ".join([f"{p}: {v}" for p, v in installed_versions.items()])
-        raise Exception(msg)
+        for p, v in required_versions.items():
+            if installed_versions[p] == self.NOT_INSTALLED or installed_versions[p] < v:
+                raise Exception(f"Version of {p} is {installed_versions[p]}, but should be at least {v}.")
 
 
 if __name__ == "__main__":
