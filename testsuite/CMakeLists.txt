@@ -45,6 +45,7 @@ if (WITH_PYTHON)
   python_test(TARGET integration SOURCE integration.py)
   python_test(TARGET diamagnetism SOURCE diamagnetism.py)
   python_test(TARGET atom_ion_interaction SOURCE atom_ion_interaction.py)
+  python_test(TARGET versions SOURCE versions.py)
   if(NOT MSVC AND NOT (APPLE AND DEFINED ENV{CI}) AND NOT WITH_CLANG_TIDY) # timeout
     python_test(TARGET parallelization SOURCE parallelization.py
       ENVIRONMENT "OPENBLAS_NUM_THREADS=1" "MKL_NUM_THREADS=1")
