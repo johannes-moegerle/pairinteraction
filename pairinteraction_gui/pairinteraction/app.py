@@ -452,7 +452,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui = Ui_plotwindow()
         self.ui.setupUi(self)
 
-        self.invalidQuantumnumbers = [False, False, False, False]
+        self.invalidQuantumnumbers = {}
+        self.invalidQuantumnumbersMessage = ""
 
         self.samebasis = False
 
@@ -698,22 +699,12 @@ class MainWindow(QtWidgets.QMainWindow):
         # Connect signals and slots
         self.thread.criticalsignal.connect(self.showCriticalMessage)
 
-        self.ui.spinbox_system_n1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_n2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_l1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_l2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_j1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_j2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_m1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_system_m2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_n1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_n2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_l1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_l2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_j1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_j2.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_m1.valueChanged.connect(self.validateQuantumnumbers)
-        self.ui.spinbox_plot_m2.valueChanged.connect(self.validateQuantumnumbers)
+        for system in ["system", "plot"]:
+            for number in [1, 2]:
+                for q in "nljm":
+                    getattr(self.ui, f"spinbox_{system}_{q}{number}").valueChanged.connect(
+                        self.validateOneQuantumnumbers
+                    )
 
         self.ui.spinbox_system_j1.editingFinished.connect(self.validateSpinLike)
         self.ui.spinbox_system_j2.editingFinished.connect(self.validateSpinLike)
@@ -730,8 +721,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.combobox_system_species2.currentIndexChanged[str].connect(self.forbidSamebasis)
         self.ui.combobox_system_species1.currentIndexChanged[str].connect(self.defaultQuantumnumbers)
         self.ui.combobox_system_species2.currentIndexChanged[str].connect(self.defaultQuantumnumbers)
-        self.ui.combobox_system_species1.currentIndexChanged.connect(self.validateQuantumnumbers)
-        self.ui.combobox_system_species2.currentIndexChanged.connect(self.validateQuantumnumbers)
+        self.ui.combobox_system_species1.currentIndexChanged.connect(self.validateAllQuantumnumbers)
+        self.ui.combobox_system_species2.currentIndexChanged.connect(self.validateAllQuantumnumbers)
 
         self.ui.radiobutton_system_pairbasisDefined.toggled.connect(self.togglePairbasis)
         self.ui.radiobutton_plot_overlapDefined.toggled.connect(self.toggleOverlapstate)
@@ -2520,6 +2511,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleOverlapstate(self):
         checked = self.ui.radiobutton_plot_overlapDefined.isChecked()
         self.ui.widget_plot_qn.setEnabled(checked)
+        self.validateAllQuantumnumbers()
 
     @QtCore.pyqtSlot(bool)  # TODO
     def toggleSymmetrization(self):
@@ -2647,12 +2639,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if sender.value() != -1 and sender.value() < 2:
             sender.setValue(2)
 
-    @QtCore.pyqtSlot()
-    def validateQuantumnumbers(self):
-        sender_name = self.sender().objectName()
-        system = "plot" if "plot" in sender_name else "system"
-        number = 2 if "2" in sender_name else 1
-        i = number - 1 + (2 if system == "plot" else 0)
+    def validateAllQuantumnumbers(self):
+        self.invalidQuantumnumbers = {}
+        check_systems = ["system", "plot"] if self.ui.radiobutton_plot_overlapDefined.isChecked() else ["system"]
+        for system in check_systems:
+            for number in [1, 2]:
+                self.validateOneQuantumnumbers(system, number)
+
+    def validateOneQuantumnumbers(self, system=None, number=None):
+        if system is None or number is None:
+            sender_name = self.sender().objectName()
+            system = "plot" if "plot" in sender_name else "system"
+            number = 2 if "2" in sender_name else 1
+        assert system in ["system", "plot"] and number in [1, 2]
+        name = system + str(number)
 
         qns = []
         for q in "nljm":
@@ -2666,18 +2666,19 @@ class MainWindow(QtWidgets.QMainWindow):
         is_plot = system == "plot"
         if l >= n and not (is_plot and PLOT_ALL in [n, l]):
             err = True
-        if abs(m) > j and not (is_plot and PLOT_ALL in [j, m]):
+        elif abs(m) > j and not (is_plot and PLOT_ALL in [j, m]):
             err = True
-        if abs(l - j) > s and not (is_plot and PLOT_ALL in [l, j]):
+        elif abs(l - j) > s and not (is_plot and PLOT_ALL in [l, j]):
             err = True
-        if (j - s) % 1 != 0 and not (is_plot and PLOT_ALL in [j]):
+        elif (j - s) % 1 != 0 and not (is_plot and PLOT_ALL in [j]):
             err = True
+        self.invalidQuantumnumbers[name] = err
 
-        self.invalidQuantumnumbers[i] = err
-        if np.any(self.invalidQuantumnumbers):
-            self.ui.statusbar.showMessage("Invalide quantum numbers specified.")
-        else:
-            self.ui.statusbar.showMessage("")
+        msg = ", ".join([k for k, v in self.invalidQuantumnumbers.items() if v])
+        if msg != "":
+            msg = f"Invalid quantum numbers specified ({msg})."
+        self.ui.statusbar.showMessage(msg)
+        self.invalidQuantumnumbersMessage = msg
 
     def _validateQnGeneral(self, _type="integer", orPlotAll=False):
         assert _type in ["integer", "integerpositive", "spinlike", "spinlikepositive"]
@@ -2725,8 +2726,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if focused_widget is not None:
                 focused_widget.clearFocus()
 
-            if np.any(self.invalidQuantumnumbers):
-                QtWidgets.QMessageBox.critical(self, "Message", "Invalide quantum numbers specified.")
+            if any(self.invalidQuantumnumbers.values()):
+                QtWidgets.QMessageBox.critical(self, "Message", self.invalidQuantumnumbersMessage)
 
             elif (
                 self.ui.radiobutton_system_missingWhittaker.isChecked()
