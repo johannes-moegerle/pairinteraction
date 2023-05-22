@@ -572,26 +572,19 @@ class MainWindow(QtWidgets.QMainWindow):
         conn.close()
 
         # TODO !!!!!! numBlocks kann auch hoeher als 3 sein!
-        self.buffer_basis = [{}, {}, {}]
-        self.buffer_energies = [{}, {}, {}]
-        self.buffer_positions = [{}, {}, {}]
-        self.buffer_boolarr = [{}, {}, {}]
-        self.buffer_basis_potential = {}
-        self.buffer_energies_potential = {}
-        self.buffer_positions_potential = {}
+        self.buffer_basis = {}
+        self.buffer_energies = {}
+        self.buffer_positions = {}
+        self.buffer_boolarr = {}
 
         self.buffer_energiesMap = [{}, {}, {}]
         self.buffer_positionsMap = [{}, {}, {}]
         self.buffer_overlapMap = [{}, {}, {}]
-        self.buffer_energiesMap_potential = {}
-        self.buffer_positionsMap_potential = {}
-        self.buffer_overlapMap_potential = {}
 
         self.lines_buffer_minIdx = {}
-        self.colormap_buffer_minIdx_potential = 0
         self.colormap_buffer_minIdx_field = [0] * 3
-        self.lines_buffer_minIdx_field = [0] * 3
-        self.iSelected = {}
+        self.lines_buffer_minIdx_field = {}
+        """self.iSelected = {}"""
 
         """self.ui.colorbutton_plot_nosym.setColor(self.symmetrycolors[0])
         self.ui.colorbutton_plot_sym.setColor(self.symmetrycolors[1])
@@ -1499,11 +1492,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 os.remove(basisfile)
 
                 # clear variables
-                self.lines_buffer_minIdx_field = {}
-                self.buffer_basis = {}
-                self.buffer_energies = {}
-                self.buffer_positions = {}
-                self.buffer_boolarr = {}
+                for buffer in [
+                    self.lines_buffer_minIdx_field,
+                    self.buffer_basis,
+                    self.buffer_energies,
+                    self.buffer_positions,
+                    self.buffer_boolarr,
+                ]:
+                    _bns = list(buffer.keys())
+                    for _bn in _bns:
+                        if _bn == bn or bn == NO_BN:
+                            del buffer[_bn]
 
                 if len(self.storage_states[idx]) == 1:
                     self.labelprob = None
@@ -2100,7 +2099,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                         while (
                             self.lines_buffer_minIdx_field[blocknumber] in self.buffer_basis[blocknumber].keys()
-                            and self.lines_buffer_minIdx_field[blocknumber] + 1 in self.buffer_basis[blocknumber].keys()
+                            and (self.lines_buffer_minIdx_field[blocknumber] + 1)
+                            in self.buffer_basis[blocknumber].keys()
                         ):
                             # determine the data to plot
                             overlap = np.abs(
@@ -2272,25 +2272,18 @@ class MainWindow(QtWidgets.QMainWindow):
             and self.thread.dataqueue_potential.empty()
         ):
             # Delete buffers
-            self.buffer_basis = [{}, {}, {}]
-            self.buffer_energies = [{}, {}, {}]
-            self.buffer_positions = [{}, {}, {}]
-            self.buffer_boolarr = [{}, {}, {}]
-            self.buffer_basis_potential = {}
-            self.buffer_energies_potential = {}
-            self.buffer_positions_potential = {}
+            self.buffer_basis = {}
+            self.buffer_energies = {}
+            self.buffer_positions = {}
+            self.buffer_boolarr = {}
 
             self.buffer_energiesMap = [{}, {}, {}]
             self.buffer_positionsMap = [{}, {}, {}]
             self.buffer_overlapMap = [{}, {}, {}]
-            self.buffer_energiesMap_potential = {}
-            self.buffer_positionsMap_potential = {}
-            self.buffer_overlapMap_potential = {}
 
             self.lines_buffer_minIdx = {}
-            self.colormap_buffer_minIdx_potential = 0
             self.colormap_buffer_minIdx_field = [0] * 3
-            self.lines_buffer_minIdx_field = [0] * 3
+            self.lines_buffer_minIdx_field = {}
 
             # Delete c++ process
             if self.proc is not None:
