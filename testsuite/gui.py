@@ -3,7 +3,6 @@
 import io
 import json
 import os
-import shutil
 import sys
 import tempfile
 import unittest
@@ -16,6 +15,8 @@ from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QApplication
 
 import pairinteraction_gui.pairinteraction.app as piGui
+
+# import shutil
 
 app = QApplication(sys.argv)
 PATH = os.path.join("reference_data", "gui")
@@ -99,8 +100,8 @@ class PairinteractionGuiTest(unittest.TestCase):
         # clean up processes
         self.form.cleanupProcesses()
 
-        # Remove tmp cache
-        shutil.rmtree(self.form.path_cache)
+        # # Remove tmp cache
+        # shutil.rmtree(self.form.path_cache)
 
 
 if __name__ == "__main__":
