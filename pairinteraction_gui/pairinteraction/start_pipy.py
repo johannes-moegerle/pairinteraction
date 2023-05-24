@@ -14,11 +14,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 import pipy  # noqa
 
-# FIXME: this is a workaround to make the multiprocessing work on windows
-# Somehow LAPACKE in SystemBase.hpp is not working if we dont do this
-import scipy.sparse  # noqa
-
-#
+# FIXME
+# If a SystemTwo object is passed to a subprocess created by multiprocessing, it is pickled. To make use of the
+# object in the subprocess, "import scipy.sparse" must apparently be called. Otherwise, the method
+# "initializeInteraction" in SystemTwo.cpp will not work.
 
 
 def main(paths, kwargs):
@@ -84,6 +83,17 @@ def do_simulations(settings, kwargs, pass_atom="direct"):
         atom.updateFromParams(param_list[-1])
         atom.system.buildInteraction()
         atom.preCalculate = True
+
+        # Instead of passing the system to the subprocess, we let the subprocesses recreate it using the precalculated
+        # matrix elements (hopefully, this does not take significantly longer than passing the system to the
+        # subprocess?) Ideally, each subprocess recreates it just once. This seems to work for forked processes,
+        # however for spawned processes, the recreation happens for each run - even if the same SpawnPoolWorker is
+        # used. Why is the state of the "Atom" object not stored in the spawned processes? # FIXME
+        atom._system = None
+
+        # An side effect from the recreation of the system is, that the energies get recalculated. This is fine,
+        # however, it causes the warning "calcEnergies was already called, sure you want to recalculate the
+        # energies?" # FIXME
 
     pass_atom = kwargs.get("pass_atom", pass_atom)
     if pass_atom == "direct":
