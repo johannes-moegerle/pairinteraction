@@ -1543,6 +1543,10 @@ class MainWindow(QtWidgets.QMainWindow):
             # --- load eigenvalues (energies, y value) and eigenvectors (basis) ---
             filestep, numBlocks, blocknumber, filename = dataqueue.get()
 
+            if blocknumber not in self.storage_states[idx]:  # first load basis for this symmetry block
+                dataqueue.put([filestep, numBlocks, blocknumber, filename])
+                break
+
             # save data
             self.storage_data[idx].append([filestep, blocknumber, filename])
 

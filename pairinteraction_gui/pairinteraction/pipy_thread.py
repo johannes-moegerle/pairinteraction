@@ -125,7 +125,7 @@ class PipyThread(QThread):
                 settings["blocknumber"] = bn
                 self.run_simulations(settings, kwargs)
         else:
-            settings["blocknumber"] = 1
+            settings["blocknumber"] = 0
             self.run_simulations(settings, kwargs)
         info("all Hamiltonian processed", kwargs)
         output(f"{'>>END':5}", kwargs)
