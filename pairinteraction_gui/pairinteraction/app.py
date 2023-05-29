@@ -570,6 +570,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pipy_thread = None
         self.read_thread = None
         self.proc = None
+        self.run_with_pipy = None
 
         self.timer = QtCore.QTimer()
         self.starttime = None
@@ -1543,7 +1544,9 @@ class MainWindow(QtWidgets.QMainWindow):
             # --- load eigenvalues (energies, y value) and eigenvectors (basis) ---
             filestep, numBlocks, blocknumber, filename = dataqueue.get()
 
-            if blocknumber not in self.storage_states[idx]:  # first load basis for this symmetry block
+            if (
+                blocknumber not in self.storage_states[idx] and self.run_with_pipy
+            ):  # first load basis for this symmetry block
                 dataqueue.put([filestep, numBlocks, blocknumber, filename])
                 break
 
@@ -1675,7 +1678,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     csr_vappend(self.labelprob[bn], (probs.T * self.labelmat[idx][bn]).tocsr())
                     self.labelprob_energy[bn].append(energies)
 
-                if (bn == NO_BN and len(self.labelprob_energy[bn]) == numBlocks) or bn != NO_BN:
+                if self.run_with_pipy or len(self.labelprob_energy[bn]) == numBlocks:
                     # FIXME: for the new backend we are plotting the labels for each symmetry block separately
                     # this leads to plotting the same label multiple times
                     # The problem is, that for each symmetry block we might have different allowed states
@@ -3070,10 +3073,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.createThread()
 
             if self.ui.checkbox_use_python_api.isChecked():
+                self.run_with_pipy = True
                 self.pipy_thread.setParams(params)
                 self.pipy_thread.setNumProcesses(self.numprocessors)
                 self.pipy_thread.start()
             else:
+                self.run_with_pipy = False
                 # OMP_NUM_THREADS – Specifies the number of threads to
                 # use in parallel regions.  The value of this variable
                 # shall be a comma-separated list of positive
