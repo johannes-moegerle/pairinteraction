@@ -234,6 +234,7 @@ class PipyThread(QThread):
         filename = os.path.join(pathCacheMatrix, _name + ".pkl")
         filename_json = os.path.join(pathCacheMatrix, _name + ".json")
 
+        pirealcomplex = "pireal" if config.isReal() else "picomplex"
         if not os.path.exists(filename) or not os.path.exists(filename_json):
             atom.calcEnergies()
             energies0 = config.getEnergiesPair() if atom.nAtoms == 2 else config.getEnergiesSingle()
@@ -244,14 +245,15 @@ class PipyThread(QThread):
             }
 
             print(
-                f"{ip+1}. Hamiltonian diagonalized ({dimension}x{dimension}) ({multiprocessing.current_process().name})"
+                f"{pirealcomplex}: {ip+1}. Hamiltonian diagonalized ({dimension}x{dimension})"
+                f"({multiprocessing.current_process().name})"
             )
             with open(filename, "wb") as f:
                 pickle.dump(data, f)
             with open(filename_json, "w") as f:
                 json.dump(data["params"], f, indent=4)
         else:
-            print(f"{ip+1}. Hamiltonian loaded")
+            print(f"{pirealcomplex}: {ip+1}. Hamiltonian loaded")
 
         result = {
             "ip": ip,
