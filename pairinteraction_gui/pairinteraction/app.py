@@ -4183,7 +4183,6 @@ class MainWindow(QtWidgets.QMainWindow):
         painter.end()"""
 
     def closeEvent(self, event):
-        # Kill c++ program if necessary
         self.abortCalculation()
 
         # Save last settings

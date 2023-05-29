@@ -25,7 +25,8 @@ P_ONE_RUN = None
 
 
 class PipyThread(QThread):
-    NO_POOL = "NO_POOL"
+    SEQUENTIAL = "SEQUENTIAL"
+    STOP = "STOP"
 
     def __init__(self, all_queues, context="default", pass_atom="direct&delete", parent=None):
         super().__init__(parent)
@@ -36,6 +37,7 @@ class PipyThread(QThread):
         self.context = context
         self.pass_atom = pass_atom
 
+        self.terminating = False
         self.params = None
         self.num_pr = None
         self._pool = None
@@ -48,9 +50,11 @@ class PipyThread(QThread):
         return self._pool
 
     def createPool(self):
+        if self.terminating:
+            return self.STOP
         print("Creating new pool")
         if self.num_pr == 1:
-            self._pool = self.NO_POOL
+            self._pool = self.SEQUENTIAL
         elif self.context == "default":
             self._pool = multiprocessing.Pool(self.num_pr)
         elif self.context in ["fork", "spawn", "forkserver"]:
@@ -59,9 +63,8 @@ class PipyThread(QThread):
         return self._pool
 
     def killPool(self):
-        if self._pool == self.NO_POOL:
+        if self._pool == self.SEQUENTIAL:
             pass
-            # self.exiting = True
         elif self._pool is not None:
             self._pool.terminate()
             self._pool.join()
@@ -86,10 +89,14 @@ class PipyThread(QThread):
     def terminate(self):
         # FIXME this is not the cleanest way, maybe using multiprocessing.manager/event/value would be better
         # but also might be slower and introduces bugs, where the gui does not close, althoug the terminal terminated
+        print("Terminate PipyThread")
+        self.terminating = True
         current_time = time.time()
         self.killPool()
         super().terminate()
         self.wait()
+        # FIXME, in some instances wait will wait forever.
+        # For some reason using a QDeadlineTimer also did not work
 
         # delete files, that where changed during pool.terminate was called
         for real_complex in ["real", "complex"]:
@@ -185,11 +192,13 @@ class PipyThread(QThread):
 
         # The actual calculation
         pool = kwargs.get("pool", None)
-        if pool == PipyThread.NO_POOL or pool is None:
+        if pool == self.SEQUENTIAL:
             for i in ip_list:
+                if self.terminating:
+                    return
                 result = P_ONE_RUN(i)
                 self.print_completed(settings, result, kwargs)
-        else:
+        elif isinstance(pool, multiprocessing.pool.Pool):
             if (
                 pool._ctx.get_start_method() != "fork"
             ):  # this is slower on linux and sometimes had weird bugs when aborting calculation
@@ -203,6 +212,8 @@ class PipyThread(QThread):
                 # this is slower, but equivalent to spawn
                 # results = pool.starmap_async(self.one_run, starmap_list).get()
             for result in results:
+                if self.terminating:
+                    return
                 self.print_completed(settings, result, kwargs)
             # don't terminate pool / use with pool, such that we can reuse it
 
