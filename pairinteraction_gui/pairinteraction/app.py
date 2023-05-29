@@ -2651,14 +2651,14 @@ class MainWindow(QtWidgets.QMainWindow):
         s = SPIN_DICT.get(species, 0.5)
 
         err = False
-        is_plot = system == "plot"
-        if l >= n and not (is_plot and PLOT_ALL in [n, l]):
+        qns_is_plot_all = [q == PLOT_ALL for q in qns] if system == "plot" else [False] * 4
+        if not l < n and not any(qns_is_plot_all[:2]):
             err = True
-        elif abs(m) > j and not (is_plot and PLOT_ALL in [j, m]):
+        if not abs(m) <= j and not any(qns_is_plot_all[2:]):
             err = True
-        elif abs(l - j) > s and not (is_plot and PLOT_ALL in [l, j]):
+        if not (abs(l - s) <= j <= l + s) and not any(qns_is_plot_all[1:3]):
             err = True
-        elif (j - s) % 1 != 0 and not (is_plot and PLOT_ALL in [j]):
+        if not ((j + s) % 1 == 0 and (j - s) % 1 == 0) and not qns_is_plot_all[2]:
             err = True
         self.invalidQuantumnumbers[name] = err
 
