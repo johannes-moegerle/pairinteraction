@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import pipy  # noqa
 
 
-P_ONE_RUN = None
+SPIN_DICT = {"Li": 0.5, "Na": 0.5, "K": 0.5, "Rb": 0.5, "Cs": 0.5, "Sr1": 0, "Sr3": 1}
 
 
 class PipyThread(QThread):
@@ -128,6 +128,7 @@ class PipyThread(QThread):
         output(f"{'>>TOT':5}{scriptoptions['numBlocks']*scriptoptions['listoptions']['steps']:7}", kwargs)
         if config["nAtoms"] == 2:
             for bn, syms in enumerate(scriptoptions["symmetries_list"]):
+                print(f"Starting symmetry block {bn}/{scriptoptions['numBlocks']} with {syms}")
                 config.update(syms)
                 settings["blocknumber"] = bn
                 self.run_simulations(settings, kwargs)
@@ -142,6 +143,9 @@ class PipyThread(QThread):
         info(f"construct {atom}", kwargs)
 
         # create and save atom basis
+        if atom.noStates:
+            info("No states found to diagonalize", kwargs)
+            return
         if atom.nAtoms == 2:
             allQunumbers = [[*qns[:, 0], *qns[:, 1]] for qns in np.array(atom.allQunumbers)]
         else:
@@ -309,14 +313,13 @@ def params_to_settings(params):
         if (
             k.startswith("delta")
             or any(k == q + i for q in ["species", "n", "l", "j", "m"] for i in ["", "1", "2"])
-            or k in ["diamagnetism", "samebasis", "exponent"]
+            or k in ["diamagnetism", "samebasis", "exponent", "zerotheta"]
         ):
             config[k] = v
 
     config["method"] = ["WHITTAKER", "NUMEROV"][params["missingCalc"]]
     config["pathCache"] = params["pathCache"]
     if params["button_id"] == 2:
-        config["pair.conserveMomenta"] = params.get("conserveM", False)
         config["pair.useQunumbersSinglePair"] = True
         config["nAtoms"] = 2
     elif params["button_id"] in [0, 1]:
@@ -345,6 +348,40 @@ def params_to_settings(params):
     config["isReal"] = all([listoptions.get(k, 0) == 0 for k in ["minBy", "maxBy", "minEy", "maxEy"]])
 
     if config["nAtoms"] == 2:
+        # FIXME: make this symmetry conditions nicer
+        # and more general for arbitrary s (does arbitrary schange anything?)
+        config["pair.conserveMomenta"] = params.get("conserveM", False)
+        if config["pair.conserveMomenta"]:
+            if not listoptions["onlySameSector"]:
+                if config["deltaMSingle"] >= 0:
+                    deltaM = config["deltaMSingle"]
+                    allowed_m1 = list(np.arange(-deltaM, deltaM + 1) + config["m1"])
+                    allowed_m2 = list(np.arange(-deltaM, deltaM + 1) + config["m2"])
+                elif config["deltaJSingle"] >= 0:
+                    maxJ1 = config["j1"] + config["deltaJSingle"]
+                    maxJ2 = config["j2"] + config["deltaJSingle"]
+                    allowed_m1 = list(np.arange(-maxJ1, maxJ1 + 1))
+                    allowed_m2 = list(np.arange(-maxJ2, maxJ2 + 1))
+                elif config["deltaLSingle"] >= 0:
+                    maxJ1 = config["l1"] + config["deltaLSingle"] + SPIN_DICT[config["species1"]]
+                    maxJ2 = config["l2"] + config["deltaLSingle"] + SPIN_DICT[config["species2"]]
+                    allowed_m1 = list(np.arange(-maxJ1, maxJ1 + 1))
+                    allowed_m2 = list(np.arange(-maxJ2, maxJ2 + 1))
+                else:
+                    raise ValueError(
+                        "WARNING: conserveM but not only plot same symmetry sector. "
+                        "no deltaMSingle, deltaJSingle or deltaLSingle given, failed to determine allowed momenta. "
+                    )
+                allowedMomenta = list({m1 + m2 for m1 in allowed_m1 for m2 in allowed_m2})
+            else:
+                if config.get("zerotheta", False):
+                    allowedMomenta = [config["m1"] + config["m2"]]
+                else:
+                    J = config["j1"] + config["j2"]
+                    allowedMomenta = list(np.arange(-J, J + 1))
+        else:
+            allowedMomenta = [None]
+
         symmetries = {}
         for s in ["inv", "per", "ref"]:
             v = [eo for eo in ["O", "E"] if params.get(s + eo, False)]
@@ -352,20 +389,30 @@ def params_to_settings(params):
         symmetries_list = []
         for inv, per, ref in itertools.product(*[symmetries[k] for k in ["inv", "per", "ref"]]):
             if listoptions["onlySameSector"]:
+                # In case of even permutation or even inversion symmetry and the same inital state for the first
+                # and second atom: the inital state is not contained in the corresponding block
+                samestate = all(config[k + "1"] == config[k + "2"] for k in ["species", "n", "l", "j", "m"])
+                if (per == "E" or inv == "E") and samestate:
+                    continue
                 # In case of inversion and permutation symmetry: the orbital parity is conserved and we
                 # just use the blocks with the same parity as the inital state
-                L = config["l1"] + config["l2"]
-                if (f"{inv}{per}" in ["EO", "OE"] and L % 2 == 0) or (f"{inv}{per}" in ["EE", "OO"] and L % 2 == 1):
-                    continue
-                # TODO add more symmetry conditions here, see HamiltonianTwo.cpp
-            symmetries_list.append({"inversion": inv, "permutation": per, "reflection": ref})
+                if inv in ["E", "O"] and per in ["E", "O"]:
+                    inv_times_per = +1 if inv == per else -1
+                    parityL = (-1) ** (config["l1"] + config["l2"])
+                    if inv_times_per != parityL:
+                        continue
+            if ref in ["E", "O"] and allowedMomenta != [None]:
+                # In case of reflection symmetry: do just use the absolute value of momenta
+                allowedMomenta = list({abs(M) for M in allowedMomenta})
+            for M in allowedMomenta:
+                symmetries_list.append({"inversion": inv, "permutation": per, "reflection": ref, "pair.momenta": M})
     else:
-        symmetries_list = [{k: False for k in ["inversion", "permutation", "reflection"]}]
+        symmetries_list = [{k: False for k in ["inversion", "permutation", "reflection", "pair.momenta"]}]
 
     runtimeoptions = {"NUM_PROCESSES": int(params.get("NUM_PROCESSES", 0))}
 
     # touch unimportant options
-    for k in ["dd", "dq", "qq", "missingWhittaker", "precision", "zerotheta"]:
+    for k in ["dd", "dq", "qq", "missingWhittaker", "precision"]:
         params.get(k, None)
 
     settings = {

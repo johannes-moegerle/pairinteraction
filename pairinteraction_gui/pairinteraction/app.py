@@ -619,6 +619,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.linesData = [[], [], []]  # [None,None,None] waere auch ok
         self.linesSender = [None, None, None]
         self.storage_data = [[], [], []]  # [idx]
+        self.empty_data = [0, 0, 0]  # [idx]
         self.storage_states = [{}, {}, {}]  # [idx][bn]
         self.storage_configuration = [[None, None], [None, None], [None, None]]  # [idx][0: system, 1: plotter]
         self.stateidx_field = [{}, {}, {}]  # [idx][bn]
@@ -1566,7 +1567,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 bn = NO_BN
 
             if len(energies) == 0:
-                print("WARNING: Loaded data does not contain any eigenvalues.")
+                print("Loaded data does not contain any eigenvalues.")
+                self.empty_data[idx] += 1
+                # dont continue, since the "empty" run is needed for the labels
 
             if idx == 2:
                 symmetrycolor = []
@@ -2268,6 +2271,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Logging for debugging
         print(f"Total time needed: {time() - self.starttime:.2f} s")
         print(f"Amount of data loaded into gui: {len(self.storage_data[self.current_idx])}")
+        if self.empty_data[self.current_idx] != 0:
+            print(f"From which {self.empty_data[self.current_idx]} was empty data.")
         # Stop this timer
         self.timer.stop()
 
@@ -2865,6 +2870,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.saveSettingsSystem(filelike_system)
                 self.saveSettingsPlotter(filelike_plotter)
 
+                self.empty_data[idx] = 0
                 self.storage_data[idx] = []
                 self.storage_states[idx] = {}
                 self.storage_configuration[idx] = [filelike_system.getvalue(), filelike_plotter.getvalue()]
