@@ -71,6 +71,7 @@ class PipyThread(QThread):
             self._pool = None
 
     def setNumProcesses(self, num_pr):
+        num_pr = None if num_pr == 0 else num_pr
         if self.num_pr != num_pr:
             self.killPool()
             self.num_pr = num_pr
