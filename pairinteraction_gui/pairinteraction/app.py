@@ -629,6 +629,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 or not os.path.isabs(self.path_cache)
             ):
                 self.path_cache = os.path.expanduser(r"~/.cache/pairinteraction")
+        os.makedirs(self.path_config, exist_ok=True)
 
         self.path_cache_wignerd = os.path.join(self.path_cache, "wignerd/")
         self.path_lastsettings = os.path.join(self.path_config, "lastsettings/")
@@ -884,9 +885,11 @@ class MainWindow(QtWidgets.QMainWindow):
             with open(self.path_cache_last) as f:
                 params = json.load(f)
                 self.path_cache = params["cachedir"]
+        else:
+            with open(self.path_cache_last, "w") as f:
+                json.dump({"cachedir": self.path_cache}, f, indent=4, sort_keys=True)
 
-        # Check version
-
+        ### Check version
         # Load version
         version_settings_saved = None
         version_cache_saved = None
@@ -897,23 +900,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 version_cache_saved = params["version_cache"]
 
         # Compare version
-        """if os.path.exists(self.path_out) and version_settings_saved != version_settings and \
-            version_cache_saved != version_cache: # Poblem: Cachedirectory muss nicht mehr in self.path_out liegen
-            msg = QtWidgets.QMessageBox()
-            msg.setText('A new program version has been installed. Due to major changes, cache '
-                +'and settings have to be cleared. This deletes the directory {}.'.format(self.path_out))
-            msg.setIcon(QtWidgets.QMessageBox.Information);
-            msg.addButton(QtWidgets.QMessageBox.Cancel)
-            msg.addButton(QtWidgets.QMessageBox.Ok)
-            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-            answer = msg.exec()
-
-            # Delete directory
-            if answer == QtWidgets.QMessageBox.Ok:
-                shutil.rmtree(self.path_out)
-            else:
-                sys.exit()"""
-
         if os.path.exists(self.path_lastsettings) and version_settings_saved != version_settings:
             msg = QtWidgets.QMessageBox()
             msg.setText(
@@ -926,10 +912,10 @@ class MainWindow(QtWidgets.QMainWindow):
             msg.addButton(QtWidgets.QMessageBox.Ok)
             msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
             answer = msg.exec()
-
             # Delete directory
             if answer == QtWidgets.QMessageBox.Ok:
                 shutil.rmtree(self.path_lastsettings)
+                version_settings_saved = None
             else:
                 sys.exit()
 
@@ -944,18 +930,14 @@ class MainWindow(QtWidgets.QMainWindow):
             msg.addButton(QtWidgets.QMessageBox.Ok)
             msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
             answer = msg.exec()
-
             # Delete directory
             if answer == QtWidgets.QMessageBox.Ok:
                 shutil.rmtree(self.path_cache)
+                version_cache_saved = None
             else:
                 sys.exit()
 
-        # Create directories
-        os.makedirs(self.path_config, exist_ok=True)
-        os.makedirs(self.path_cache, exist_ok=True)
-
-        if not os.path.isfile(self.path_version):
+        if version_settings_saved is None or version_cache_saved is None:
             with open(self.path_version, "w") as f:
                 json.dump(
                     {"version_settings": version_settings, "version_cache": version_cache},
@@ -963,41 +945,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     indent=4,
                     sort_keys=True,
                 )
+                version_settings_saved = version_settings
+                version_cache_saved = version_cache
 
-        if not os.path.exists(self.path_lastsettings):
-            os.makedirs(self.path_lastsettings)
-
-            with open(self.path_version) as f:
-                version_cache_saved = json.load(f)["version_cache"]
-
-            with open(self.path_version, "w") as f:
-                json.dump(
-                    {"version_settings": version_settings, "version_cache": version_cache_saved},
-                    f,
-                    indent=4,
-                    sort_keys=True,
-                )
-
-        if not os.path.isfile(self.path_cache_last):
-            with open(self.path_cache_last, "w") as f:
-                json.dump({"cachedir": self.path_cache}, f, indent=4, sort_keys=True)
-
-        if not os.path.exists(self.path_cache):
-            os.makedirs(self.path_cache)
-
-            with open(self.path_version) as f:
-                version_settings_saved = json.load(f)["version_settings"]
-
-            with open(self.path_version, "w") as f:
-                json.dump(
-                    {"version_settings": version_settings_saved, "version_cache": version_cache},
-                    f,
-                    indent=4,
-                    sort_keys=True,
-                )
-
-        if not os.path.exists(self.path_cache_wignerd):
-            os.makedirs(self.path_cache_wignerd)
+        # Create directories
+        os.makedirs(self.path_cache, exist_ok=True)
+        os.makedirs(self.path_lastsettings, exist_ok=True)
+        os.makedirs(self.path_cache_wignerd, exist_ok=True)
 
         # create object to calculate wigner d matrix
         self.wignerd = Wignerd(self.path_cache_wignerd)
