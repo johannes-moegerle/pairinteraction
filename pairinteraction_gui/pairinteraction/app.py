@@ -880,9 +880,6 @@ class MainWindow(QtWidgets.QMainWindow):
             with open(self.path_cache_last) as f:
                 params = json.load(f)
                 self.path_cache = params["cachedir"]
-        else:
-            with open(self.path_cache_last, "w") as f:
-                json.dump({"cachedir": self.path_cache}, f, indent=4, sort_keys=True)
 
         ### Check version
         # Load version
@@ -948,10 +945,16 @@ class MainWindow(QtWidgets.QMainWindow):
         os.makedirs(self.path_lastsettings, exist_ok=True)
         os.makedirs(self.path_cache_wignerd, exist_ok=True)
 
-        # create object to calculate wigner d matrix
+        # Create path_cache_last
+        if not os.path.isfile(self.path_cache_last):
+            os.makedirs(self.path_cache, exist_ok=True)
+            with open(self.path_cache_last, "w") as f:
+                json.dump({"cachedir": self.path_cache}, f, indent=4, sort_keys=True)
+
+        # Create object to calculate wigner d matrix
         self.wignerd = Wignerd(self.path_cache_wignerd)
 
-        # print(self.wignerd.calc(1/2, 1/2, -1/2, -np.pi/5))
+        # Print(self.wignerd.calc(1/2, 1/2, -1/2, -np.pi/5))
 
         # Load last settings
         if not os.path.isfile(self.path_system_last):
