@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740359382697,
+  "lastUpdate": 1740964228063,
   "repoUrl": "https://github.com/johannes-moegerle/pairinteraction",
   "entries": {
     "C++ Benchmark": [
@@ -2624,6 +2624,52 @@ window.BENCHMARK_DATA = {
             "value": 50370551.750001855,
             "unit": "ns/iter",
             "extra": "iterations: 12\ncpu: 50364951.5 ns\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]",
+            "email": "49699333+dependabot[bot]@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "bb6c3de406d099239cc10e68a43ed6bd11ae9fb1",
+          "message": "Bump the batch group with 1 update\n\nBumps the batch group with 1 update: [benchmark-action/github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark).\n\n\nUpdates `benchmark-action/github-action-benchmark` from 1.18.0 to 1.19.2\n- [Release notes](https://github.com/benchmark-action/github-action-benchmark/releases)\n- [Changelog](https://github.com/benchmark-action/github-action-benchmark/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/benchmark-action/github-action-benchmark/compare/v1.18.0...v1.19.2)\n\n---\nupdated-dependencies:\n- dependency-name: benchmark-action/github-action-benchmark\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n  dependency-group: batch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2024-01-29T07:34:15Z",
+          "url": "https://github.com/johannes-moegerle/pairinteraction/commit/bb6c3de406d099239cc10e68a43ed6bd11ae9fb1"
+        },
+        "date": 1740964227551,
+        "tool": "googlecpp",
+        "benches": [
+          {
+            "name": "benchmark_integration",
+            "value": 170037670.33332905,
+            "unit": "ns/iter",
+            "extra": "iterations: 3\ncpu: 170001699.99999997 ns\nthreads: 1"
+          },
+          {
+            "name": "BM_zheev",
+            "value": 49461827.23076967,
+            "unit": "ns/iter",
+            "extra": "iterations: 13\ncpu: 49441420.769230776 ns\nthreads: 1"
+          },
+          {
+            "name": "BM_zheevd",
+            "value": 27069185.695651136,
+            "unit": "ns/iter",
+            "extra": "iterations: 23\ncpu: 27065237.56521739 ns\nthreads: 1"
+          },
+          {
+            "name": "BM_Eigen",
+            "value": 33878184.52380911,
+            "unit": "ns/iter",
+            "extra": "iterations: 21\ncpu: 33882665.38095237 ns\nthreads: 1"
           }
         ]
       }
