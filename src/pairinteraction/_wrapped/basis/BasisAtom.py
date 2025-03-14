@@ -115,9 +115,9 @@ class BasisAtom(BasisBase[KetAtom]):
             database = Database.get_global_database()
         if additional_kets is not None:
             for ket in additional_kets:
-                creator.append_ket(ket._cpp)  # type: ignore [reportPrivateUsage]
+                creator.append_ket(ket._cpp)
             self._additional_kets = additional_kets
-        self._cpp = creator.create(database._cpp)  # type: ignore [reportPrivateUsage]
+        self._cpp = creator.create(database._cpp)
 
     def __repr__(self) -> str:
         args = ""

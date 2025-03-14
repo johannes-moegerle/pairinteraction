@@ -77,7 +77,7 @@ class SystemAtomPage(SimulationPage):
         l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
         for ket, energy in zip(corresponding_kets, energies[0]):
             if "mqdt" not in ket.species:
-                short_label = f"{ket.n} {l_dict.get(ket.l, ket.l)}"  # type: ignore
+                short_label = f"{ket.n} {l_dict.get(ket.l, ket.l)}"
             else:
                 short_label = f"{ket.n} L={ket.l:.1f}"
             if short_label in used:

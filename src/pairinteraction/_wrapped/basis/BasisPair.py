@@ -85,7 +85,7 @@ class BasisPair(BasisBase[KetPairType]):
         """
         creator = self._cpp_creator()
         for system in systems:
-            creator.add(system._cpp)  # type: ignore [reportPrivateUsage, arg-type]
+            creator.add(system._cpp)  # type: ignore [arg-type]
         if m is not None:
             creator.restrict_quantum_number_m(*m)
         if product_of_parities is not None:
