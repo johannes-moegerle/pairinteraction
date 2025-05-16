@@ -1,84 +1,57 @@
 # SPDX-FileCopyrightText: 2025 Pairinteraction Developers
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
-import logging
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Optional, Union, overload
 
-import numpy as np
-
+from pairinteraction._wrapped.ket.ket_atom import KetAtom
 from pairinteraction.perturbative.effective_hamiltonian import get_effective_hamiltonian_from_system
 from pairinteraction.units import QuantityScalar
 
 if TYPE_CHECKING:
-    from pairinteraction import (
-        complex as pi_complex,
-        real as pi_real,
-    )
-    from pairinteraction._wrapped.ket.ket_atom import KetAtom  # noqa: F401  # required for sphinx for KetPairLike
-    from pairinteraction._wrapped.ket.ket_pair import (
-        KetPairComplex,  # noqa: F401  # required for sphinx for KetPairLike
-        KetPairLike,
-        KetPairReal,  # noqa: F401  # required for sphinx for KetPairLike
-    )
+    from pairinteraction._wrapped.ket.ket_pair import KetAtomTuple
+    from pairinteraction._wrapped.system.system_pair import SystemPair
     from pairinteraction.units import PintFloat
 
-    SystemPair = Union[pi_real.SystemPair, pi_complex.SystemPair]
 
-logger = logging.getLogger(__name__)
+@overload
+def get_c6_from_system(ket_tuple: "KetAtomTuple", system_pair: "SystemPair[Any]", unit: None = None) -> "PintFloat": ...
 
 
 @overload
-def get_c6_from_system(ket_tuple: "KetPairLike", system_pair: "SystemPair", *, unit: None = None) -> "PintFloat": ...
-
-
-@overload
-def get_c6_from_system(ket_tuple: "KetPairLike", system_pair: "SystemPair", unit: str) -> float: ...
+def get_c6_from_system(ket_tuple: "KetAtomTuple", system_pair: "SystemPair[Any]", unit: str) -> float: ...
 
 
 def get_c6_from_system(
-    ket_tuple: "KetPairLike", system_pair: "SystemPair", unit: Optional[str] = None
+    ket_tuple: "KetAtomTuple", system_pair: "SystemPair[Any]", unit: Optional[str] = None
 ) -> Union[float, "PintFloat"]:
-    r"""Calculate the :math:`C_6` coefficient for a given tuple of ket states.
+    r"""Calculate the :math:`C_6` coefficient for a given pair state.
 
-    This function calculates the :math:`C_6` coefficient in the desired unit. The input is a 2-tuple of single atom ket
-    states.
+    This function takes a tuple of two KetAtom (i.e. (ketA, ketB) ),
+    and calculates the :math:`C_6` coefficient of the corresponding pair state.
+    If ketA and ketB are of the same species, they must be identical.
+    If you want to calculate the second order perturbation corrections for two different states, of the same species,
+    use the `get_effective_hamiltonian_from_system(...)` function instead.
 
     Args:
-        ket_tuple: The input is a tuple repeating the same single atom state in the format (a,a).
-        If a tuple with not exactly two identical states is given, a ValueError is raised.
-        system_pair: The pair system that is used for the calculation.
-        unit: The unit to which to convert the result. Default None will return a pint quantity.
+        ket_tuple: Tuple of two KetAtom: (ketA, ketB) for which the :math:`C_6` coefficient is calculated.
+        system_pair: SystemPair object that defines the Hamiltonian
+            (including electric and magnetic fields, the interatomic distance, ...)
+        unit: The unit in which the :math:`C_6` coefficient will be returned.
+            Default None will return a pint quantity.
 
     Returns:
-        The :math:`C_6` coefficient. If a unit is specified, the value in this unit is returned.
-
-    Raises:
-        ValueError: If a tuple with more than two single atom states is given.
+        The :math:`C_6` coefficient.
 
     """
-    if isinstance(ket_tuple, Iterable):
-        if len(ket_tuple) != 2:
-            raise ValueError("C6 coefficient can be calculated only for a single 2-atom state.")
-        if ket_tuple[0].species == ket_tuple[1].species and ket_tuple[0] != ket_tuple[1]:
-            raise ValueError(
-                "If you want to calculate 2nd order perturbations of two different states a and b, "
-                "please use the get_effective_hamiltonian_from_system([(a,b), (b,a)], system_pair) function."
-            )
-
-    r = system_pair.get_distance()
-    if np.isinf(r.magnitude):
-        logger.warning(
-            "Pair system is initialized without a distance. "
-            "Calculating the C6 coefficient at a distance vector of [0, 0, 20] mum."
+    if len(ket_tuple) != 2 or not isinstance(ket_tuple[0], KetAtom):
+        raise ValueError("The C6 coefficient can only be calculated for a tuple of two KetAtoms as ket_tuple argument.")
+    if ket_tuple[0].species == ket_tuple[1].species and ket_tuple[0] != ket_tuple[1]:
+        raise ValueError(
+            "If you want to calculate second order perturbation corrections for two different states "
+            "use the `get_effective_hamiltonian_from_system(...)` function."
         )
-        old_distance_vector = system_pair.get_distance_vector()
-        system_pair.set_distance_vector([0, 0, 20], "micrometer")
-        c6 = get_c6_from_system(ket_tuple, system_pair, unit=unit)
-        system_pair.set_distance_vector(old_distance_vector)
-        return c6
-
-    h_eff, _ = get_effective_hamiltonian_from_system([ket_tuple], system_pair, order=2)
-    h_0, _ = get_effective_hamiltonian_from_system([ket_tuple], system_pair, order=0)
-    c6_pint = (h_eff[0, 0] - h_0[0, 0]) * r**6  # type: ignore [index] # PintArray does not know it can be indexed
+    h_eff, _ = get_effective_hamiltonian_from_system(
+        [ket_tuple], system_pair, perturbation_order=2, return_only_specified_order=True
+    )
+    c6_pint = h_eff[0, 0] * system_pair.get_distance() ** 6  # type: ignore [index] # PintArray does not know it can be indexed
     return QuantityScalar.from_pint(c6_pint, "c6").to_pint_or_unit(unit)
