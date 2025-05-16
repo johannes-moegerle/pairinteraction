@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union, overload
 import numpy as np
 from scipy import sparse
 
+from pairinteraction.perturbative.create_system import create_system_for_perturbative
 from pairinteraction.units import QuantityArray
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from pairinteraction._wrapped.basis.basis_pair import BasisPair
     from pairinteraction._wrapped.ket.ket_pair import KetAtomTuple
     from pairinteraction._wrapped.system.system_pair import SystemPair
-    from pairinteraction.units import NDArray, PintArray
+    from pairinteraction.units import NDArray, PintArray, PintArrayLike
 
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,85 @@ def get_effective_hamiltonian_from_system(
 
     h_eff = QuantityArray.from_base_unit(h_eff_au, "energy").to_pint_or_unit(unit)
     return h_eff, eigvec_perturb
+
+
+@overload
+def get_effective_hamiltonian(
+    ket_tuples: Collection["KetAtomTuple"],
+    distance_vector: "PintArrayLike",
+    electric_field: Optional["PintArrayLike"] = None,
+    magnetic_field: Optional["PintArrayLike"] = None,
+    multipole_order: int = 3,
+    with_diamagnetism: bool = False,
+    perturbation_order: int = 2,
+    *,
+    unit: None = None,
+) -> tuple["PintArray", sparse.csr_matrix]: ...
+
+
+@overload
+def get_effective_hamiltonian(
+    ket_tuples: Collection["KetAtomTuple"],
+    distance_vector: "PintArrayLike",
+    electric_field: Optional["PintArrayLike"] = None,
+    magnetic_field: Optional["PintArrayLike"] = None,
+    multipole_order: int = 3,
+    with_diamagnetism: bool = False,
+    perturbation_order: int = 2,
+    *,
+    unit: str,
+) -> tuple["NDArray", sparse.csr_matrix]: ...
+
+
+def get_effective_hamiltonian(
+    ket_tuples: Collection["KetAtomTuple"],
+    distance_vector: "PintArrayLike",
+    electric_field: Optional["PintArrayLike"] = None,
+    magnetic_field: Optional["PintArrayLike"] = None,
+    multipole_order: int = 3,
+    with_diamagnetism: bool = False,
+    perturbation_order: int = 2,
+    unit: Optional[str] = None,
+) -> tuple[Union["NDArray", "PintArray"], sparse.csr_matrix]:
+    r"""Get the perturbative Hamiltonian at a desired order in Rayleigh-Schrödinger perturbation theory.
+
+    This function takes a list of KetAtom pairs (stored as tuple),
+    which forms the basis of the model space for which the effective Hamiltonian is calculated.
+    In addition it also checks for resonances between states in the model space and other dipole coupled states.
+
+    Args:
+        ket_tuples: List of tuples of KetAtom pairs, which form the basis of the model space.
+        distance_vector: distance vector between the atoms.
+        electric_field: electric field in the system.
+        magnetic_field: magnetic field in the system.
+        multipole_order: multipole-order of the interaction. Default is 3 (dipole-dipole).
+        with_diamagnetism: True if diamagnetic term should be considered. Default is False.
+        perturbation_order: order of perturbative calculation the system shall be used for. Default is 2.
+        unit: The unit in which the effective Hamiltonian should be returned.
+            Default None will return a pint quantity.
+
+    Returns:
+        - Effective Hamiltonian as a :math:`m \times m` matrix, where m is the length of `ket_tuples`,
+          either in the given unit or as pint quantity if unit is None.
+        - Eigenvectors in perturbation theory due to interaction with states out of the model space, returned as
+          a sparse matrix in compressed row format. Each row represents the corresponding eigenvector.
+
+    """
+    system_pair = create_system_for_perturbative(
+        ket_tuples,
+        distance_vector,
+        electric_field,
+        magnetic_field,
+        multipole_order,
+        with_diamagnetism,
+        perturbation_order,
+    )
+    return get_effective_hamiltonian_from_system(
+        ket_tuples,
+        system_pair,
+        perturbation_order,
+        unit=unit,
+    )
 
 
 def _calculate_perturbative_hamiltonian(

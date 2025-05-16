@@ -130,7 +130,7 @@ def create_system_for_perturbative(  # noqa: C901, PLR0912, PLR0915
 
     # minimum number of kets in the pair basis, even if the estimate of delta energy would lead to a smaller basis
     # this is to avoid misleading results when considering large distances
-    min_number_of_kets = 500
+    min_number_of_kets = 2_000
     if basis_pair.number_of_kets < min_number_of_kets and perturbation_order > 0:
         logger.debug(
             "The basis of the pair system estimated from the interaction energy is very small (%d kets)."
@@ -157,7 +157,8 @@ def create_system_for_perturbative(  # noqa: C901, PLR0912, PLR0915
             else:
                 break
 
-    if basis_pair.number_of_kets > 10_000:
+    logger.debug("The pair basis for the perturbative calculations consists of %d kets.", basis_pair.number_of_kets)
+    if basis_pair.number_of_kets > 20_000:
         logger.warning(
             "The basis of the pair system is very large (%d kets). "
             "This might lead to long calculation times. "
