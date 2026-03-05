@@ -82,6 +82,42 @@ def test_get_matrix_elements(basis: BasisPair) -> None:
     assert np.count_nonzero(matrix_elements.toarray()) <= basis.number_of_states**2
 
 
+def test_additional_kets(pi_module: PairinteractionModule) -> None:
+    """Test that additional_kets forces specific pair states into the basis."""
+    ket = pi_module.KetAtom("Rb", n=60, l=0, j=0.5, m=0.5)
+    energy_ref = ket.get_energy(unit="GHz")
+    basis_atom = pi_module.BasisAtom(
+        "Rb", n=(58, 62), l=(0, 2), energy=(energy_ref - 100, energy_ref + 100), energy_unit="GHz"
+    )
+    system = pi_module.SystemAtom(basis_atom).diagonalize()
+
+    # Create a narrow-energy basis — it will exclude many kets
+    narrow_basis = pi_module.BasisPair(
+        [system, system],
+        energy=(2 * energy_ref - 0.01, 2 * energy_ref + 0.01),
+        energy_unit="GHz",
+    )
+    normal_count = narrow_basis.number_of_kets
+    narrow_labels = {k.get_label() for k in narrow_basis.kets}
+
+    # Pick a ket that is NOT in the narrow basis (compare by label, since KetPair equality
+    # is tied to the specific BasisAtom instances created during each BasisPair.create() call)
+    full_basis = pi_module.BasisPair([system, system])
+    extra_ket = next(k for k in full_basis.kets if k.get_label() not in narrow_labels)
+    extra_ket_label = extra_ket.get_label()
+
+    # Re-create with additional_kets
+    extended_basis = pi_module.BasisPair(
+        [system, system],
+        energy=(2 * energy_ref - 0.01, 2 * energy_ref + 0.01),
+        energy_unit="GHz",
+        additional_kets=[extra_ket],
+    )
+    extended_labels = {k.get_label() for k in extended_basis.kets}
+    assert extended_basis.number_of_kets == normal_count + 1
+    assert extra_ket_label in extended_labels
+
+
 def test_error_handling(basis: BasisPair) -> None:
     """Test error cases."""
     with pytest.raises(TypeError):

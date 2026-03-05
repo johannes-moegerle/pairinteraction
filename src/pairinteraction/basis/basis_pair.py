@@ -84,6 +84,7 @@ class BasisPair(BasisBase[KetPair, StatePair]):
         product_of_parities: Parity | None = None,
         energy: tuple[float, float] | tuple[PintFloat, PintFloat] | None = None,
         energy_unit: str | None = None,
+        additional_kets: list[KetPair] | None = None,
     ) -> None:
         """Create a basis for a pair of atoms.
 
@@ -97,6 +98,7 @@ class BasisPair(BasisBase[KetPair, StatePair]):
             energy: tuple of (min, max) value for the pair energy. Default None, i.e. add all available states.
             energy_unit: In which unit the energy values are given, e.g. "GHz".
                 Default None, i.e. energy is provided as pint object.
+            additional_kets: List of additional KetPair objects to add to the basis. Default None.
 
         """
         assert len(systems) == 2, "BasisPair requires exactly two SystemAtom objects."
@@ -116,6 +118,9 @@ class BasisPair(BasisBase[KetPair, StatePair]):
             min_energy_au = np.clip(min_energy_au, -1e10, 1e10)  # FIXME
             max_energy_au = np.clip(max_energy_au, -1e10, 1e10)  # FIXME
             creator.restrict_energy(min_energy_au, max_energy_au)
+        if additional_kets is not None:
+            for ket in additional_kets:
+                creator.append_ket(ket._cpp)
         self._cpp = creator.create()
 
         self.system_atoms = tuple(systems)  # type: ignore [assignment]

@@ -177,6 +177,7 @@ static void declare_basis_pair_creator(nb::module_ &m, std::string const &type_n
         .def("restrict_energy", &BasisPairCreator<T>::restrict_energy)
         .def("restrict_quantum_number_m", &BasisPairCreator<T>::restrict_quantum_number_m)
         .def("restrict_product_of_parities", &BasisPairCreator<T>::restrict_product_of_parities)
+        .def("append_ket", &BasisPairCreator<T>::append_ket)
         .def("create", &BasisPairCreator<T>::create);
 }
 

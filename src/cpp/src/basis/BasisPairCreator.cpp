@@ -49,6 +49,13 @@ BasisPairCreator<Scalar> &BasisPairCreator<Scalar>::restrict_product_of_parities
 }
 
 template <typename Scalar>
+BasisPairCreator<Scalar> &
+BasisPairCreator<Scalar>::append_ket(const std::shared_ptr<const ket_t> &ket) {
+    additional_kets.push_back(ket);
+    return *this;
+}
+
+template <typename Scalar>
 std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() const {
     if (systems_atom.size() != 2) {
         throw std::invalid_argument("Two SystemAtom must be added before creating the BasisPair.");
@@ -139,6 +146,40 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             // Store the ket index
             state_indices_to_ket_index.emplace(std::vector<size_t>{idx1, idx2}, ket_index++);
         }
+    }
+
+    // Process additional kets (may be outside normal energy/m/parity restrictions)
+    for (const auto &extra : additional_kets) {
+        // BasisPairCreator is a friend of KetPair, so private access is allowed
+        const auto &extra_bases = extra->atomic_bases;
+        const auto &extra_indices = extra->atomic_indices;
+
+        if (extra_bases[0]->get_id_of_kets() != basis1->get_id_of_kets() ||
+            extra_bases[1]->get_id_of_kets() != basis2->get_id_of_kets()) {
+            throw std::invalid_argument(
+                "Additional ket's atomic bases must be compatible with the systems' bases.");
+        }
+
+        size_t idx1 = extra_indices[0];
+        size_t idx2 = extra_indices[1];
+
+        // Skip if already included by the normal loop
+        if (state_indices_to_ket_index.contains({idx1, idx2})) {
+            continue;
+        }
+
+        const real_t energy = eigenenergies1[idx1] + eigenenergies2[idx2];
+        kets.emplace_back(std::make_shared<ket_t>(
+            typename ket_t::Private(), std::initializer_list<size_t>{idx1, idx2},
+            std::initializer_list<std::shared_ptr<const BasisAtom<Scalar>>>{basis1, basis2},
+            energy));
+        state_indices_to_ket_index.emplace(std::vector<size_t>{idx1, idx2}, ket_index++);
+
+        // Extend the index range for idx1 so get_amplitudes() visits this (idx1, idx2)
+        auto &existing = map_range_of_state_index2.at(idx1);
+        size_t new_min = std::min(existing.min(), idx2);
+        size_t new_max = std::max(existing.max(), idx2 + 1);
+        map_range_of_state_index2.at(idx1) = typename basis_t::range_t(new_min, new_max);
     }
 
     kets.shrink_to_fit();

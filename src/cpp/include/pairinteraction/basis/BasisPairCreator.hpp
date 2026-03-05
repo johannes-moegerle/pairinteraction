@@ -37,6 +37,7 @@ public:
     BasisPairCreator<Scalar> &restrict_energy(real_t min, real_t max);
     BasisPairCreator<Scalar> &restrict_quantum_number_m(real_t min, real_t max);
     BasisPairCreator<Scalar> &restrict_product_of_parities(Parity value);
+    BasisPairCreator<Scalar> &append_ket(const std::shared_ptr<const ket_t> &ket);
     std::shared_ptr<const BasisPair<Scalar>> create() const;
 
 private:
@@ -44,6 +45,7 @@ private:
     Range<real_t> range_energy;
     Range<real_t> range_quantum_number_m;
     Parity product_of_parities; // NOLINT
+    std::vector<std::shared_ptr<const ket_t>> additional_kets;
 };
 
 extern template class BasisPairCreator<double>;
