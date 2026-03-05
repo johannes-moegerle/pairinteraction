@@ -34,10 +34,9 @@ public:
             std::initializer_list<std::shared_ptr<const BasisAtom<Scalar>>> atomic_bases,
             real_t energy);
 
-    static std::shared_ptr<KetPair<Scalar>>
-    create(std::shared_ptr<const BasisAtom<Scalar>> basis1,
-           std::shared_ptr<const BasisAtom<Scalar>> basis2, size_t idx1, size_t idx2,
-           real_t energy) {
+    static std::shared_ptr<KetPair<Scalar>> create(std::shared_ptr<const BasisAtom<Scalar>> basis1,
+                                                   std::shared_ptr<const BasisAtom<Scalar>> basis2,
+                                                   size_t idx1, size_t idx2, real_t energy) {
         return std::make_shared<KetPair<Scalar>>(
             Private{}, std::initializer_list<size_t>{idx1, idx2},
             std::initializer_list<std::shared_ptr<const BasisAtom<Scalar>>>{basis1, basis2},
