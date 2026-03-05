@@ -11,8 +11,11 @@ from pairinteraction.ket.ket_atom import KetAtom
 from pairinteraction.ket.ket_base import KetBase
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+
     from pairinteraction import _backend
     from pairinteraction.state import StateAtom
+    from pairinteraction.system.system_atom import SystemAtom
 
 
 KetAtomTuple = Union[tuple["KetAtom", "KetAtom"], Sequence["KetAtom"]]
@@ -34,16 +37,57 @@ class KetPair(KetBase):
     Thus, the Ket pair objects depend on the system and the applied fields.
     Therefore for different pair systems the KetPair objects are not necessarily orthogonal anymore.
 
-    Currently one cannot create a KetPair object directly, but they are used in the background when creating a
+    A KetPair object can be created directly from two diagonalized :class:`pairinteraction.SystemAtom` objects
+    and two :class:`pairinteraction.KetAtom` objects, or they can be obtained from a
     :class:`pairinteraction.BasisPair` object.
 
     """
 
     _cpp: _backend.KetPairComplex
 
-    def __init__(self) -> None:
-        """Creating a KetPair object directly is not possible."""  # noqa: D401
-        raise NotImplementedError("KetPair objects cannot be created directly.")
+    def __init__(self, systems: Collection[SystemAtom], kets: KetAtomTuple) -> None:
+        """Create a KetPair from two diagonalized SystemAtom objects and two KetAtom objects.
+
+        Args:
+            systems: A collection of exactly two diagonalized :class:`pairinteraction.SystemAtom` objects.
+            kets: A pair of :class:`pairinteraction.KetAtom` objects identifying the desired single-atom states.
+
+        Raises:
+            ValueError: If not exactly 2 systems and 2 kets are given, or if a system is not diagonalized.
+
+        """
+        import numpy as np
+
+        from pairinteraction import _backend
+        from pairinteraction.system.system_atom import SystemAtomReal
+
+        sys_list = list(systems)
+        ket_list = list(kets)
+
+        if len(sys_list) != 2 or len(ket_list) != 2:
+            raise ValueError("KetPair requires exactly 2 systems and 2 kets.")
+
+        sys1, sys2 = sys_list
+        ket1, ket2 = ket_list
+
+        if not sys1.is_diagonal or not sys2.is_diagonal:
+            raise ValueError("Both systems must be diagonalized before creating a KetPair.")
+
+        use_real = isinstance(sys1, SystemAtomReal) and isinstance(sys2, SystemAtomReal)
+
+        basis1 = sys1.basis
+        basis2 = sys2.basis
+        idx1 = basis1.get_corresponding_state_index(ket1)
+        idx2 = basis2.get_corresponding_state_index(ket2)
+
+        eigenenergies1 = np.array(sys1._cpp.get_eigenenergies())
+        eigenenergies2 = np.array(sys2._cpp.get_eigenenergies())
+        energy = float(eigenenergies1[idx1] + eigenenergies2[idx2])
+
+        if use_real:
+            self._cpp = _backend.KetPairReal.create(basis1._cpp, basis2._cpp, idx1, idx2, energy)  # type: ignore [arg-type, assignment]
+        else:
+            self._cpp = _backend.KetPairComplex.create(basis1._cpp, basis2._cpp, idx1, idx2, energy)
 
     def get_label(self, fmt: Literal["raw", "ket", "bra", "detailed"] = "raw", *, max_kets: int = 3) -> str:
         """Label representing the ket pair.

@@ -90,6 +90,7 @@ static void declare_ket_pair(nb::module_ &m, std::string const &type_name) {
     std::string pyclass_name = "KetPair" + type_name;
     nb::class_<KetPair<T>, Ket> pyclass(m, pyclass_name.c_str());
     pyclass.def("get_atomic_states", &KetPair<T>::get_atomic_states)
+        .def_static("create", &KetPair<T>::create)
         .def(nb::self == nb::self) // NOLINT(misc-redundant-expression)
         .def("__hash__", [](const KetPair<T> &self) { return typename KetPair<T>::hash{}(self); });
 }

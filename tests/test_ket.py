@@ -46,6 +46,27 @@ def test_ket(pi_module: PairinteractionModule) -> None:
     assert ket.get_matrix_element(ket_odd, "electric_dipole", q=+1) == 0
 
 
+def test_ket_pair(pi_module: PairinteractionModule) -> None:
+    ket1 = pi_module.KetAtom("Rb", n=60, l=0, j=0.5, m=0.5)
+    ket2 = pi_module.KetAtom("Rb", n=61, l=0, j=0.5, m=0.5)
+
+    basis1 = pi_module.BasisAtom("Rb", n=(59, 61), l=(0, 1))
+    basis2 = pi_module.BasisAtom("Rb", n=(60, 62), l=(0, 1))
+
+    sys1 = pi_module.SystemAtom(basis1).diagonalize()
+    sys2 = pi_module.SystemAtom(basis2).diagonalize()
+
+    ket_pair = pi_module.KetPair(systems=[sys1, sys2], kets=(ket1, ket2))
+
+    assert isinstance(ket_pair, pi_module.KetPair)
+    assert ket1.get_label() in ket_pair.get_label()
+    assert ket2.get_label() in ket_pair.get_label()
+
+    pair_basis = pi_module.BasisPair([sys1, sys2])
+    pair_basis_labels = [k.get_label() for k in pair_basis.kets]
+    assert ket_pair.get_label() in pair_basis_labels
+
+
 def test_ket_equal(pi_module: PairinteractionModule) -> None:
     ket1 = pi_module.KetAtom("Rb", n=60, l=0, j=0.5, m=0.5)
     ket2 = pi_module.KetAtom("Rb", n=60, l=0, j=0.5, m=0.5)
