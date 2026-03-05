@@ -37,8 +37,8 @@ class KetPair(KetBase):
     Thus, the Ket pair objects depend on the system and the applied fields.
     Therefore for different pair systems the KetPair objects are not necessarily orthogonal anymore.
 
-    A KetPair object can be created directly from two :class:`pairinteraction.KetAtom` objects and
-    two diagonalized :class:`pairinteraction.SystemAtom` objects, or they can be obtained from a
+    A KetPair object can be created directly from two indicies and two diagonalized
+    :class:`pairinteraction.SystemAtom` objects, or they can be obtained from a
     :class:`pairinteraction.BasisPair` object.
 
     """
@@ -46,29 +46,48 @@ class KetPair(KetBase):
     _cpp: _backend.KetPairComplex
     _cpp_type = _backend.KetPairComplex
 
-    def __init__(self, ket_tuple: KetAtomTuple, systems: Collection[SystemAtom]) -> None:
+    def __init__(
+        self,
+        state_indices: Collection[int] | tuple[int, int],
+        systems: Collection[SystemAtom] | tuple[SystemAtom, SystemAtom],
+    ) -> None:
         """Create a KetPair from two diagonalized SystemAtom objects and two KetAtom objects.
+
+        Args:
+            state_indices: A pair of integers identifying the desired single-atom states in the diagonalized systems.
+            systems: A collection of exactly two diagonalized :class:`pairinteraction.SystemAtom` objects.
+
+        """
+        if len(systems) != 2 or len(state_indices) != 2:
+            raise ValueError("KetPair requires exactly 2 systems and 2 kets.")
+        if not all(sys.is_diagonal for sys in systems):
+            raise ValueError("Both systems must be diagonalized before creating a KetPair.")
+
+        basis_atoms = [system.basis for system in systems]
+        energy_au = sum(system._cpp.get_eigenenergies()[idx] for system, idx in zip(systems, state_indices))
+        self._cpp = self._cpp_type.create(*[basis._cpp for basis in basis_atoms], *state_indices, energy_au)  # type: ignore [call-arg,arg-type]
+
+    @classmethod
+    def from_corresponding_ket_tuple(
+        cls,
+        ket_tuple: KetAtomTuple,
+        systems: Collection[SystemAtom] | tuple[SystemAtom, SystemAtom],
+    ) -> KetPair:
+        """Create a KetPair from two two KetAtom and diagonalized SystemAtom objects objects.
 
         Args:
             ket_tuple: A pair of :class:`pairinteraction.KetAtom` objects identifying the desired single-atom states.
             systems: A collection of exactly two diagonalized :class:`pairinteraction.SystemAtom` objects.
 
-        Raises:
-            ValueError: If not exactly 2 systems and 2 kets are given, or if a system is not diagonalized.
+        Returns:
+            A KetPair object corresponding to the corresponding single-atom states in the diagonalized systems.
 
         """
         if len(systems) != 2 or len(ket_tuple) != 2:
             raise ValueError("KetPair requires exactly 2 systems and 2 kets.")
-
-        if not all(sys.is_diagonal for sys in systems):
-            raise ValueError("Both systems must be diagonalized before creating a KetPair.")
-
         basis_atoms = [system.basis for system in systems]
-        ket_indices = [basis.get_corresponding_state_index(ket) for basis, ket in zip(basis_atoms, ket_tuple)]
-
-        energy_au = sum(system._cpp.get_eigenenergies()[idx] for system, idx in zip(systems, ket_indices))
-
-        self._cpp = self._cpp_type.create(*[basis._cpp for basis in basis_atoms], *ket_indices, energy_au)  # type: ignore [call-arg,arg-type]
+        state_indices = [basis.get_corresponding_state_index(ket) for basis, ket in zip(basis_atoms, ket_tuple)]
+        return cls(state_indices, systems)
 
     def get_label(self, fmt: Literal["raw", "ket", "bra", "detailed"] = "raw", *, max_kets: int = 3) -> str:
         """Label representing the ket pair.

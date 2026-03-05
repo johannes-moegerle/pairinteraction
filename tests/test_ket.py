@@ -56,7 +56,7 @@ def test_ket_pair(pi_module: PairinteractionModule) -> None:
     system1 = pi_module.SystemAtom(basis1).diagonalize()
     system2 = pi_module.SystemAtom(basis2).diagonalize()
 
-    ket_pair = pi_module.KetPair((ket1, ket2), (system1, system2))
+    ket_pair = pi_module.KetPair.from_corresponding_ket_tuple((ket1, ket2), (system1, system2))
 
     assert isinstance(ket_pair, pi_module.KetPair)
     assert ket1.get_label() in ket_pair.get_label()
