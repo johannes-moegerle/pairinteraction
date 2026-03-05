@@ -53,16 +53,16 @@ def test_ket_pair(pi_module: PairinteractionModule) -> None:
     basis1 = pi_module.BasisAtom("Rb", n=(59, 61), l=(0, 1))
     basis2 = pi_module.BasisAtom("Rb", n=(60, 62), l=(0, 1))
 
-    sys1 = pi_module.SystemAtom(basis1).diagonalize()
-    sys2 = pi_module.SystemAtom(basis2).diagonalize()
+    system1 = pi_module.SystemAtom(basis1).diagonalize()
+    system2 = pi_module.SystemAtom(basis2).diagonalize()
 
-    ket_pair = pi_module.KetPair(systems=[sys1, sys2], kets=(ket1, ket2))
+    ket_pair = pi_module.KetPair((ket1, ket2), (system1, system2))
 
     assert isinstance(ket_pair, pi_module.KetPair)
     assert ket1.get_label() in ket_pair.get_label()
     assert ket2.get_label() in ket_pair.get_label()
 
-    pair_basis = pi_module.BasisPair([sys1, sys2])
+    pair_basis = pi_module.BasisPair([system1, system2])
     pair_basis_labels = [k.get_label() for k in pair_basis.kets]
     assert ket_pair.get_label() in pair_basis_labels
 
