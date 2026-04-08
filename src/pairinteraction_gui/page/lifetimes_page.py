@@ -97,6 +97,7 @@ class LifetimesPage(CalculationPage):
         self.add_cursor()
 
         self.plotwidget.canvas.draw()
+        self.plotwidget.refresh_home_view()
         self.ket_config.set_lifetime(results.lifetime)
 
     def add_cursor(self) -> None:

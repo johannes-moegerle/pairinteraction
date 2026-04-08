@@ -28,3 +28,8 @@ class CustomNavigationToolbar(NavigationToolbar):
     def __init__(self, canvas: FigureCanvasQTAgg, parent: QWidget | None = None) -> None:
         """Initialize the custom navigation toolbar."""
         super().__init__(canvas, parent, coordinates=False)
+
+    def refresh_home_view(self) -> None:
+        """Replace the stored home view with the current axes state."""
+        self.update()
+        self.push_current()

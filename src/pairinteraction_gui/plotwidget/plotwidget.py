@@ -62,6 +62,10 @@ class PlotWidget(WidgetV):
         self.canvas.ax.clear()
         self.canvas.draw()
 
+    def refresh_home_view(self) -> None:
+        """Update the reset button target to the current plot extent."""
+        self.navigation_toolbar.refresh_home_view()
+
 
 class PlotEnergies(PlotWidget):
     """Plotwidget for plotting energy levels."""
