@@ -8,7 +8,7 @@ from attr import dataclass
 
 import pairinteraction as pi_complex
 import pairinteraction.real as pi_real
-from pairinteraction_gui.calculate.calculate_base import Parameters, Results
+from pairinteraction_gui.calculate.calculate_base import Parameters, Results, diagonalize_with_progress
 
 if TYPE_CHECKING:
     from pairinteraction_gui.page import OneAtomPage  # noqa: F401  # related to ruff extend-generics
@@ -51,7 +51,7 @@ def _calculate_one_atom(parameters: ParametersOneAtom) -> ResultsOneAtom:
     ]
 
     logger.debug("Diagonalizing SystemAtoms...")
-    pi.diagonalize(
+    diagonalize_with_progress(
         system_list,
         **parameters.diagonalize_kwargs,
         **parameters.get_diagonalize_energy_range_kwargs(ket_energy),

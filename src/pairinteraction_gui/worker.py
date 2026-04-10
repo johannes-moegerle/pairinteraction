@@ -88,19 +88,27 @@ class MultiThreadWorker(QThread):
 
     def enable_busy_indicator(self, widget: QWidget) -> None:
         """Run a loading gif while the worker is running."""
-        self.busy_label = QLabel(widget)
         gif_path = Path(__file__).parent / "images" / "loading.gif"
         self.busy_movie = QMovie(str(gif_path))
         self.busy_movie.setScaledSize(QSize(100, 100))  # Make the gif larger
+        self.busy_label = QLabel(widget)
         self.busy_label.setMovie(self.busy_movie)
         self.busy_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.busy_label.setGeometry((widget.width() - 100) // 2, (widget.height() - 100) // 2, 100, 100)
+
+        self.busy_status_label = QLabel(widget)
+        self.busy_status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self.busy_status_label.setWordWrap(True)
+        self.busy_status_label.setGeometry((widget.width() - 320) // 2, (widget.height() - 100) // 2 + 105, 320, 48)
+        self.busy_status_label.hide()
 
         self.signals.started.connect(self._start_gif)
         self.signals.finished.connect(self._stop_gif)
 
     def _start_gif(self) -> None:
         self.busy_label.show()
+        self.busy_status_label.show()
+        self.busy_status_label.setText("Starting calculation...")
         self.busy_movie.start()
 
     def _stop_gif(self) -> None:
@@ -108,6 +116,13 @@ class MultiThreadWorker(QThread):
             self.busy_movie.stop()
         if hasattr(self, "busy_label"):
             self.busy_label.hide()
+        if hasattr(self, "busy_status_label"):
+            self.busy_status_label.hide()
+            self.busy_status_label.clear()
+
+    def update_busy_status(self, message: str) -> None:
+        if hasattr(self, "busy_status_label"):
+            self.busy_status_label.setText(message)
 
     def run(self) -> None:
         """Initialise the runner function with passed args, kwargs."""

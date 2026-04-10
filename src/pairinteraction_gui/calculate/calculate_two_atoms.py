@@ -10,7 +10,7 @@ from attr import dataclass
 
 import pairinteraction as pi_complex
 import pairinteraction.real as pi_real
-from pairinteraction_gui.calculate.calculate_base import Parameters, Results
+from pairinteraction_gui.calculate.calculate_base import Parameters, Results, diagonalize_with_progress
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -85,7 +85,7 @@ def _calculate_two_atoms(parameters: ParametersTwoAtoms) -> ResultsTwoAtoms:
             for i in range(n_atoms)
         )
         logger.debug("Diagonalizing SystemAtoms...")
-        pi.diagonalize(systems, **parameters.diagonalize_kwargs)
+        diagonalize_with_progress(systems, **parameters.diagonalize_kwargs)
         logger.debug("Done diagonalizing SystemAtoms.")
         ket_pair_energy_0 = sum(systems[i].get_corresponding_energy(kets[i], "GHz") for i in range(n_atoms))
         delta_energy = parameters.pair_delta_energy
@@ -112,7 +112,7 @@ def _calculate_two_atoms(parameters: ParametersTwoAtoms) -> ResultsTwoAtoms:
             systems_list.append(systems)
         systems_flattened = [system for systems in systems_list for system in systems]
         logger.debug("Diagonalizing SystemAtoms...")
-        pi.diagonalize(systems_flattened, **parameters.diagonalize_kwargs)
+        diagonalize_with_progress(systems_flattened, **parameters.diagonalize_kwargs)
         logger.debug("Done diagonalizing SystemAtoms.")
         delta_energy = parameters.pair_delta_energy
         basis_pair_list = []
@@ -142,7 +142,7 @@ def _calculate_two_atoms(parameters: ParametersTwoAtoms) -> ResultsTwoAtoms:
         system_pair_list.append(system)
 
     logger.debug("Diagonalizing SystemPairs...")
-    pi.diagonalize(
+    diagonalize_with_progress(
         system_pair_list,
         **parameters.diagonalize_kwargs,
         **parameters.get_diagonalize_energy_range_kwargs(ket_pair_energy_0),

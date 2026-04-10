@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
@@ -13,11 +14,11 @@ import pairinteraction as pi
 from pairinteraction_gui.worker import MultiThreadWorker
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from typing_extensions import Self
 
-    from pairinteraction.system import SystemAtom, SystemAtomReal, SystemPair, SystemPairReal
+    from pairinteraction.system import SystemBase
     from pairinteraction.units import NDArray
     from pairinteraction_gui.config.basis_config import QuantumNumberRestrictions
     from pairinteraction_gui.config.ket_config import QuantumNumbers
@@ -245,7 +246,7 @@ class Results(ABC):
     def from_calculate(
         cls,
         parameters: Parameters[Any],
-        system_list: list[SystemPairReal] | list[SystemPair] | list[SystemAtomReal] | list[SystemAtom],
+        system_list: Sequence[SystemBase[Any]],
         ket: pi.KetAtom | tuple[pi.KetAtom, ...],
         energy_offset: float,
     ) -> Self:
@@ -262,6 +263,26 @@ class Results(ABC):
         state_labels = {i: [s.get_label() for s in states] for i, states in states_dict.items()}
 
         return cls(energies, energy_offset, ket_overlaps, state_labels)
+
+
+def diagonalize_with_progress(systems: Sequence[SystemBase[Any]], **diagonalize_kwargs: Any) -> None:
+    """Diagonalize systems in GUI-friendly chunks to expose progress updates."""
+    total = len(systems)
+    if total == 0:
+        return
+
+    if isinstance(systems[0], pi.SystemAtom):
+        progress_label = "Diagonalizing atomic systems"
+    else:
+        progress_label = "Diagonalizing pair systems"
+
+    chunk_size = max(1, math.ceil(total / 20))
+    worker = MultiThreadWorker.current_worker()
+    for start in range(0, total, chunk_size):
+        if worker is not None:
+            percent = round(100 * start / total)
+            worker.update_busy_status(f"{progress_label} {percent}%...")
+        pi.diagonalize(systems[start : start + chunk_size], **diagonalize_kwargs)
 
 
 def as_string(value: str, *, raw_string: bool = False) -> str:
