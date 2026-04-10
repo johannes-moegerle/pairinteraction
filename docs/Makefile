@@ -14,7 +14,7 @@ ALLSPHINXOPTS = "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 help:
 	@$(SPHINXBUILD) -M help $(ALLSPHINXOPTS)
 
-.PHONY: help Makefile clean new
+.PHONY: help Makefile clean new gui-notebooks
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
@@ -30,3 +30,8 @@ clean:
 
 livehtml:
 	sphinx-autobuild -b html $(ALLSPHINXOPTS) --watch ../src/pairinteraction/ --watch ../README.md
+
+gui-notebooks:
+	python create_gui_notebooks.py
+	python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 \
+	    tutorials/examples_gui_notebooks/*.ipynb

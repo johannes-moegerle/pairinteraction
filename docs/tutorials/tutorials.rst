@@ -67,3 +67,16 @@ from the command line. Below we show a few examples of how one can use the GUI.
 
 .. raw:: html
     :file: examples_gui/slideshow.html
+
+.. _tutorial-gui-notebooks:
+
+Tutorials - GUI Notebooks
+--------------------------
+
+The following notebooks were exported from the GUI and show the same calculations
+available in the graphical user interface.
+
+.. nbgallery::
+
+    examples_gui_notebooks/stark_map
+    examples_gui_notebooks/pair_potential

@@ -86,7 +86,7 @@ copybutton_prompt_is_regexp = True
 
 # -- Options for jupyter notebooks -------------------------------------------------
 nbsphinx_prolog = """
-{% set docname = env.doc2path(env.docname, base=None).split("/")[-1] %}
+{% set docname = env.docname + ".ipynb" %}
 
 .. raw:: html
 
@@ -108,7 +108,7 @@ nbsphinx_prolog = """
 
     <div class="admonition note">
       Open as Jupyter notebook in
-      <a class="reference external" href="https://colab.research.google.com/github/pairinteraction/pairinteraction/blob/master/docs/tutorials/examples_python/{{ docname|e }}">Google Colab</a>.
+      <a class="reference external" href="https://colab.research.google.com/github/pairinteraction/pairinteraction/blob/master/docs/{{ docname|e }}">Google Colab</a>.
     </div>
 """  # noqa: E501
 
