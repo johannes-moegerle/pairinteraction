@@ -59,12 +59,12 @@ static void declare_system(nb::module_ &m, const std::string &type_name) {
             "diagonalize",
             [](S &self, const DiagonalizerInterface<scalar_t> &diagonalizer,
                std::optional<real_t> min_eigenenergy, std::optional<real_t> max_eigenenergy,
-               double rtol) -> T & {
-                return static_cast<T &>(
-                    self.diagonalize(diagonalizer, min_eigenenergy, max_eigenenergy, rtol));
+               double rtol, bool sort_by_energy) -> T & {
+                return static_cast<T &>(self.diagonalize(diagonalizer, min_eigenenergy,
+                                                         max_eigenenergy, rtol, sort_by_energy));
             },
             "diagonalizer"_a, "min_eigenenergy"_a = nb::none(), "max_eigenenergy"_a = nb::none(),
-            "rtol"_a = 1e-6, nb::call_guard<nb::gil_scoped_release>())
+            "rtol"_a = 1e-6, "sort_by_energy"_a = true, nb::call_guard<nb::gil_scoped_release>())
         .def("is_diagonal", &S::is_diagonal, nb::call_guard<nb::gil_scoped_release>());
 }
 

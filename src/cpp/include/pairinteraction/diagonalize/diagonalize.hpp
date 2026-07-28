@@ -19,18 +19,21 @@ template <typename Derived>
 void diagonalize(std::initializer_list<std::reference_wrapper<Derived>> systems,
                  const DiagonalizerInterface<typename Derived::scalar_t> &diagonalizer,
                  std::optional<typename Derived::real_t> min_eigenenergy = {},
-                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6);
+                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6,
+                 bool sort_by_energy = true);
 
 template <typename Derived>
 void diagonalize(std::vector<Derived> &systems,
                  const DiagonalizerInterface<typename Derived::scalar_t> &diagonalizer,
                  std::optional<typename Derived::real_t> min_eigenenergy = {},
-                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6);
+                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6,
+                 bool sort_by_energy = true);
 
 template <typename Derived>
 void diagonalize(std::vector<std::reference_wrapper<Derived>> systems,
                  const DiagonalizerInterface<typename Derived::scalar_t> &diagonalizer,
                  std::optional<typename Derived::real_t> min_eigenenergy = {},
-                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6);
+                 std::optional<typename Derived::real_t> max_eigenenergy = {}, double rtol = 1e-6,
+                 bool sort_by_energy = true);
 
 } // namespace pairinteraction

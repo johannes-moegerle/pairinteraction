@@ -70,15 +70,9 @@ int main(int argc, char **argv) {
         system_pairs.push_back(std::move(system));
     }
 
-    // Diagonalize the systems in parallel
+    // Diagonalize the systems in parallel, which also automatically sorts them by energy
     pairinteraction::DiagonalizerEigen<double> diagonalizer(pairinteraction::FloatType::FLOAT32);
     pairinteraction::diagonalize(system_pairs, diagonalizer);
-
-    // Sort by the eigenenergies
-    for (auto &system : system_pairs) {
-        auto sorter = system.get_sorter({pairinteraction::TransformationType::SORT_BY_ENERGY});
-        system.transform(sorter);
-    }
 
     // Extract results
     Eigen::MatrixX<double> eigenenergies(system_pairs.size(), basis_pair->get_number_of_states());

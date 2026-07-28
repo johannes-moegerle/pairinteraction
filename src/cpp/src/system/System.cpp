@@ -211,7 +211,8 @@ System<Derived> &System<Derived>::transform(const Sorting &transformation) {
 template <typename Derived>
 System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar_t> &diagonalizer,
                                               std::optional<real_t> min_eigenenergy,
-                                              std::optional<real_t> max_eigenenergy, double rtol) {
+                                              std::optional<real_t> max_eigenenergy, double rtol,
+                                              bool sort_by_energy) {
     set_task_status("Preparing Hamiltonian...");
 
     if (hamiltonian_requires_construction) {
@@ -220,6 +221,13 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
     }
 
     if (this->is_diagonal()) {
+        if (sort_by_energy) {
+            auto eigenenergies = get_eigenenergies();
+            if (!std::is_sorted(eigenenergies.data(),
+                                eigenenergies.data() + eigenenergies.size())) {
+                transform(get_sorter({TransformationType::SORT_BY_ENERGY}));
+            }
+        }
         return *this;
     }
 
@@ -348,6 +356,9 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
     basis = basis->transformed(eigenvectors);
 
     hamiltonian_is_diagonal = true;
+    if (sort_by_energy) {
+        transform(get_sorter({TransformationType::SORT_BY_ENERGY}));
+    }
 
     return *this;
 }

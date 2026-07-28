@@ -47,7 +47,8 @@ public:
 
     System<Derived> &diagonalize(const DiagonalizerInterface<scalar_t> &diagonalizer,
                                  std::optional<real_t> min_eigenenergy = {},
-                                 std::optional<real_t> max_eigenenergy = {}, double rtol = 1e-6);
+                                 std::optional<real_t> max_eigenenergy = {}, double rtol = 1e-6,
+                                 bool sort_by_energy = true);
     bool is_diagonal() const;
 
 protected:

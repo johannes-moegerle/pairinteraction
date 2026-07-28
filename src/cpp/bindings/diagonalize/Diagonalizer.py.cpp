@@ -82,8 +82,8 @@ static void declare_diagonalize(nb::module_ &m, std::string const &type_name) {
         pyclass_name.c_str(),
         [](nb::list pylist, // NOLINT
            const DiagonalizerInterface<scalar_t> &diagonalizer,
-           std::optional<real_t> min_eigenvalue, std::optional<real_t> max_eigenvalue,
-           double rtol) {
+           std::optional<real_t> min_eigenvalue, std::optional<real_t> max_eigenvalue, double rtol,
+           bool sort_by_energy) {
             std::vector<std::reference_wrapper<T>> systems;
             systems.reserve(pylist.size());
             for (nb::handle_t<T> &&h : pylist) {
@@ -91,11 +91,12 @@ static void declare_diagonalize(nb::module_ &m, std::string const &type_name) {
             }
             {
                 nb::gil_scoped_release release;
-                diagonalize(systems, diagonalizer, min_eigenvalue, max_eigenvalue, rtol);
+                diagonalize(systems, diagonalizer, min_eigenvalue, max_eigenvalue, rtol,
+                            sort_by_energy);
             }
         },
         "systems"_a, "diagonalizer"_a, "min_eigenvalue"_a = nb::none(),
-        "max_eigenvalue"_a = nb::none(), "rtol"_a = 1e-6);
+        "max_eigenvalue"_a = nb::none(), "rtol"_a = 1e-6, "sort_by_energy"_a = true);
 }
 
 void bind_diagonalizer(nb::module_ &m) {
