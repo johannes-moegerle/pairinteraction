@@ -19,6 +19,7 @@ from pairinteraction.state.state_atom import StateAtom
 from pairinteraction.visualization.colormaps import alphamagma
 from pairinteraction_gui.plotwidget.canvas import MatplotlibCanvas
 from pairinteraction_gui.plotwidget.navigation_toolbar import CustomNavigationToolbar
+from pairinteraction_gui.plotwidget.range_widget import AxisRangeWidget
 from pairinteraction_gui.qobjects import WidgetV
 from pairinteraction_gui.qobjects.events import show_status_tip
 from pairinteraction_gui.theme import theme_manager
@@ -43,6 +44,7 @@ class PlotWidget(WidgetV):
 
     margin = (0, 0, 0, 0)
     spacing = 15
+    show_range_widget = False
     _annotations: dict[Any, mpl.text.Annotation]
 
     def __init__(self, parent: SimulationPage) -> None:
@@ -59,14 +61,37 @@ class PlotWidget(WidgetV):
         self.navigation_toolbar.setObjectName("PlotNavigationToolBar")
 
         top_layout = QHBoxLayout()
+        if self.show_range_widget:
+            self.range_widget = AxisRangeWidget(self)
+            top_layout.addWidget(self.range_widget)
+            self.connect_limit_callbacks()
         top_layout.addStretch(1)
         top_layout.addWidget(self.navigation_toolbar)
         self.layout().addLayout(top_layout)
 
         self.layout().addWidget(self.canvas, stretch=1)
 
+    def connect_limit_callbacks(self) -> None:
+        """(Re)connect the axes limit callbacks, which update the range fields on every zoom/pan.
+
+        This has to be called again after each ax.clear(), since that replaces the axes callback registry.
+        """
+        if not self.show_range_widget:
+            return
+        for signal in ("xlim_changed", "ylim_changed"):
+            self.canvas.ax.callbacks.connect(signal, self._on_axes_limits_changed)
+
+    def _on_axes_limits_changed(self, _ax: mpl.axes.Axes) -> None:
+        self.range_widget.sync_from_axes()
+
+    def sync_range_widget(self) -> None:
+        """Update the range fields to the current axes limits (may be called from any thread)."""
+        if self.show_range_widget:
+            self.range_widget.sync_from_axes()
+
     def clear(self) -> None:
         self.canvas.ax.clear()
+        self.connect_limit_callbacks()
         self.canvas.draw_idle()
         self.clear_annotations()
         self.disconnect_click()
@@ -120,6 +145,7 @@ class PlotWidget(WidgetV):
 class PlotEnergies(PlotWidget):
     """Plotwidget for plotting energy levels."""
 
+    show_range_widget = True
     parameters: Parameters[Any] | None = None
     results: Results | None = None
     _annotations: dict[int, mpl.text.Annotation]

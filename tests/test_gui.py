@@ -112,6 +112,12 @@ def test_main_window_basic(qtbot: QtBot, window_starkmap: MainWindow) -> None:
     one_atom_page.calculate_and_abort.getNamedWidget("Calculate").click()
     qtbot.waitUntil(lambda: one_atom_page._calculation_finished, timeout=30_000)  # ci macOS-15-intel is very slow
     qtbot.waitUntil(lambda: one_atom_page._plot_finished, timeout=5_000)
+
+    # the range fields must show the limits of the freshly plotted data
+    fields = one_atom_page.plotwidget.range_widget.fields
+    x_max = one_atom_page.plotwidget.canvas.ax.get_xlim()[1]
+    qtbot.waitUntil(lambda: fields["xmax"].text() == f"{x_max:.6g}", timeout=5_000)
+
     window_starkmap.close()
 
 
@@ -194,6 +200,43 @@ def _test_calculate_page(
     exec(python_code, locals_globals, locals_globals)  # noqa: S102
     energies = np.array(locals_globals["energies_list"]) + ket_energy_0
     compare_eigensystem_to_reference(REFERENCE_PATHS[reference_name], energies)
+
+
+@pytest.mark.parametrize("page_name", ["OneAtomPage", "TwoAtomsPage"])
+def test_plot_range_fields(base_window: MainWindow, page_name: Literal["OneAtomPage", "TwoAtomsPage"]) -> None:
+    """The x/y range fields must follow the plot and zoom the plot when they are edited."""
+    page: OneAtomPage | TwoAtomsPage = base_window.stacked_pages.getNamedWidget(page_name)  # type: ignore [assignment]
+    plotwidget = page.plotwidget
+    range_widget = plotwidget.range_widget
+    fields = range_widget.fields
+    ax = plotwidget.canvas.ax
+
+    # changing the axes limits (zooming, panning or a finished calculation) updates the fields
+    ax.set_xlim(-2, 3)
+    ax.set_ylim(-1.5, 4.25)
+    assert [fields[key].text() for key in ("xmin", "xmax", "ymin", "ymax")] == ["-2", "3", "-1.5", "4.25"]
+
+    # editing the fields zooms the plot
+    for key, text in [("xmin", "0"), ("xmax", "1e2"), ("ymin", "-0.5"), ("ymax", "0.5")]:
+        fields[key].setText(text)
+    fields["ymax"].editingFinished.emit()
+    assert ax.get_xlim() == (0, 100)
+    assert ax.get_ylim() == (-0.5, 0.5)
+    assert fields["xmax"].text() == "100"
+
+    # invalid ranges are reverted
+    fields["xmin"].setText("500")
+    fields["xmin"].editingFinished.emit()
+    assert ax.get_xlim() == (0, 100)
+    assert fields["xmin"].text() == "0"
+
+    # the fields still follow the axes after the plot was cleared (ax.clear() resets the mpl callbacks)
+    plotwidget.clear()
+    ax.set_xlim(1, 2)
+    assert fields["xmax"].text() == "2"
+
+    base_window.close()
+    plt.close("all")  # make sure to close all matplotlib figures
 
 
 def test_autosave_skips_unchanged_settings(base_window: MainWindow) -> None:

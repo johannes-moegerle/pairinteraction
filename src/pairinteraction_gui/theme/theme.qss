@@ -50,6 +50,22 @@ QToolBar#PlotNavigationToolBar QToolButton:checked, QToolBar#PlotNavigationToolB
     color: palette(highlighted-text);
 }
 
+/* Plot range fields */
+QWidget#PlotRangeWidget QLabel {
+    color: palette(text);
+    font-weight: bold;
+}
+QWidget#PlotRangeWidget QLineEdit {
+    background-color: palette(base);
+    color: palette(text);
+    border: 1px solid palette(midlight);
+    border-radius: 5px;
+    padding: 4px 1px;
+}
+QWidget#PlotRangeWidget QLineEdit:focus {
+    border: 1px solid palette(accent);
+}
+
 /* Toolboxes */
 QToolBox QWidget  {
     background-color: palette(window);

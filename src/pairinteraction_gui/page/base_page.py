@@ -186,6 +186,7 @@ class CalculationPage(SimulationPage):
         self.plotwidget.setup_annotations(parameters, results)
         self.plotwidget.canvas.draw()
         self.plotwidget.navigation_toolbar.reset_home_view()
+        self.plotwidget.sync_range_widget()
         show_status_tip(self, "Finished updating plot. Tip: Click on the plot to see state information.", logger=logger)
 
     def export_png(self) -> None:
