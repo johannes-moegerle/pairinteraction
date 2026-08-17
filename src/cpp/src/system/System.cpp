@@ -117,16 +117,10 @@ Sorting System<Derived>::get_sorter(const std::vector<TransformationType> &label
             transformation.matrix.indices().data(),
             transformation.matrix.indices().data() + transformation.matrix.indices().size(),
             [&](int i, int j) { return energies_of_states[i] < energies_of_states[j]; });
-
-        transformation.transformation_type.push_back(TransformationType::SORT_BY_ENERGY);
     }
 
     if (!after_energy.empty()) {
         basis->get_sorter_without_checks(after_energy, transformation);
-    }
-
-    if (labels != transformation.transformation_type) {
-        throw std::invalid_argument("The states could not be sorted by all the requested labels.");
     }
 
     return transformation;

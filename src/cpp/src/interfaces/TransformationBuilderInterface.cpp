@@ -38,20 +38,11 @@ size_t IndicesOfBlocksCreator::size() const {
 }
 
 template <typename Scalar>
-Transformation<Scalar>::Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix,
-                                       std::vector<TransformationType> transformation_type)
-    : matrix(std::move(matrix)), transformation_type(std::move(transformation_type)) {}
-
-template <typename Scalar>
 Transformation<Scalar>::Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix)
-    : matrix(std::move(matrix)), transformation_type({TransformationType::ARBITRARY}) {}
-
-Sorting::Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix,
-                 std::vector<TransformationType> transformation_type)
-    : matrix(std::move(matrix)), transformation_type(std::move(transformation_type)) {}
+    : matrix(std::move(matrix)) {}
 
 Sorting::Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix)
-    : matrix(std::move(matrix)), transformation_type({TransformationType::ARBITRARY}) {}
+    : matrix(std::move(matrix)) {}
 
 // Explicit instantiations
 // NOLINTBEGIN(bugprone-macro-parentheses, cppcoreguidelines-macro-usage)

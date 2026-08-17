@@ -18,20 +18,14 @@ enum class TransformationType : unsigned char;
 template <typename Scalar>
 struct Transformation {
     Transformation() = default;
-    Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix,
-                   std::vector<TransformationType> transformation_type);
     Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix);
     Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix;
-    std::vector<TransformationType> transformation_type;
 };
 
 struct Sorting {
     Sorting() = default;
-    Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix,
-            std::vector<TransformationType> transformation_type);
     Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix);
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix;
-    std::vector<TransformationType> transformation_type;
 };
 
 struct IndicesOfBlock {

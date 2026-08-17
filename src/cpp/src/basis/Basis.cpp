@@ -102,8 +102,7 @@ void Basis<Derived>::perform_blocks_checks(
 template <typename Derived>
 Basis<Derived>::Basis(ketvec_t &&kets)
     : kets(std::move(kets)), coefficients{{static_cast<Eigen::Index>(this->kets.size()),
-                                           static_cast<Eigen::Index>(this->kets.size())},
-                                          {TransformationType::CANONICAL_ORDER}} {
+                                           static_cast<Eigen::Index>(this->kets.size())}} {
     if (this->kets.empty()) {
         throw std::invalid_argument("The basis must contain at least one element.");
     }
@@ -184,7 +183,6 @@ std::shared_ptr<const Derived> Basis<Derived>::copy_with_coefficients(
     auto result = std::make_shared<Derived>(derived());
 
     result->coefficients.matrix = values;
-    result->coefficients.transformation_type = {TransformationType::ARBITRARY};
 
     std::fill(result->state_index_to_quantum_number_f.begin(),
               result->state_index_to_quantum_number_f.end(), std::numeric_limits<real_t>::max());
@@ -317,11 +315,6 @@ Sorting Basis<Derived>::get_sorter(const std::vector<TransformationType> &labels
     // Get the sorter
     get_sorter_without_checks(labels, transformation);
 
-    // Check if all labels have been used for sorting
-    if (labels != transformation.transformation_type) {
-        throw std::invalid_argument("The states could not be sorted by all the requested labels.");
-    }
-
     return transformation;
 }
 
@@ -378,7 +371,7 @@ void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationT
         return false; // Elements are equal
     });
 
-    // Check for invalid values and add transformation types
+    // Check for invalid values
     for (const auto &label : labels) {
         switch (label) {
         case TransformationType::SORT_BY_PARITY:
@@ -386,23 +379,18 @@ void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationT
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the parity.");
             }
-            transformation.transformation_type.push_back(TransformationType::SORT_BY_PARITY);
             break;
         case TransformationType::SORT_BY_QUANTUM_NUMBER_M:
             if (state_index_to_quantum_number_m[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number m.");
             }
-            transformation.transformation_type.push_back(
-                TransformationType::SORT_BY_QUANTUM_NUMBER_M);
             break;
         case TransformationType::SORT_BY_QUANTUM_NUMBER_F:
             if (state_index_to_quantum_number_f[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number f.");
             }
-            transformation.transformation_type.push_back(
-                TransformationType::SORT_BY_QUANTUM_NUMBER_F);
             break;
         default:
             std::abort(); // Can't happen because of previous checks
@@ -455,7 +443,6 @@ std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
 
     result->coefficients.matrix.resize(n, n);
     result->coefficients.matrix.setIdentity();
-    result->coefficients.transformation_type = {TransformationType::CANONICAL_ORDER};
 
     result->state_index_to_quantum_number_f.resize(n);
     result->state_index_to_quantum_number_m.resize(n);
@@ -532,7 +519,6 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(const Sorting &transf
     // Apply the transformation
     set_task_status("Applying basis sorting...");
     transformed->coefficients.matrix = coefficients.matrix * transformation.matrix;
-    transformed->coefficients.transformation_type = transformation.transformation_type;
 
     transformed->state_index_to_quantum_number_f.resize(transformation.matrix.size());
     transformed->state_index_to_quantum_number_m.resize(transformation.matrix.size());
@@ -570,7 +556,6 @@ Basis<Derived>::transformed(const Transformation<scalar_t> &transformation) cons
     // rounded to the nearest half integer to avoid loss of numerical_precision.
     set_task_status("Applying basis transformation...");
     transformed->coefficients.matrix = coefficients.matrix * transformation.matrix;
-    transformed->coefficients.transformation_type = transformation.transformation_type;
 
     Eigen::SparseMatrix<real_t> probs = transformation.matrix.cwiseAbs2().transpose();
 

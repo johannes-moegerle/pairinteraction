@@ -107,7 +107,7 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
     matrix.setIdentity();
     auto transformed = basis->transformed(matrix);
     auto transformation = transformed->get_transformation();
-    DOCTEST_CHECK(transformation.transformation_type.back() == TransformationType::ARBITRARY);
+    DOCTEST_CHECK(transformation.matrix.isApprox(basis->get_coefficients()));
 }
 
 DOCTEST_TEST_CASE("a basis is canonical if its coefficients are the identity matrix") {

@@ -20,14 +20,12 @@ template <typename T>
 static void declare_transformation(nb::module_ &m, std::string const &type_name) {
     std::string pyclass_name = "Transformation" + type_name;
     nb::class_<Transformation<T>> pyclass(m, pyclass_name.c_str());
-    pyclass.def(nb::init<>())
-        .def_rw("matrix", &Transformation<T>::matrix)
-        .def_rw("transformation_type", &Transformation<T>::transformation_type);
+    pyclass.def(nb::init<>()).def_rw("matrix", &Transformation<T>::matrix);
 }
 
 static void declare_sorting(nb::module_ &m) {
     nb::class_<Sorting> pyclass(m, "Sorting");
-    pyclass.def(nb::init<>()).def_rw("transformation_type", &Sorting::transformation_type);
+    pyclass.def(nb::init<>());
 }
 
 static void declare_indices_of_blocks(nb::module_ &m) {
