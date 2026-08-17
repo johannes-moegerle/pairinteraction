@@ -25,19 +25,6 @@ template <typename Scalar>
 class BasisAtom;
 
 template <typename Derived>
-void Basis<Derived>::perform_sorter_checks(const std::vector<TransformationType> &labels) const {
-    // Check if the labels are valid sorting labels
-    for (const auto &label : labels) {
-        if (label == TransformationType::CANONICAL_ORDER) {
-            throw std::invalid_argument("Sorting by canonical order is not supported.");
-        }
-        if (!utils::is_sorting(label)) {
-            throw std::invalid_argument("One of the labels is not a valid sorting label.");
-        }
-    }
-}
-
-template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(
     const std::set<TransformationType> &unique_labels) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
@@ -298,8 +285,6 @@ Basis<Derived>::get_transformation() const {
 
 template <typename Derived>
 Sorting Basis<Derived>::get_sorter(const std::vector<TransformationType> &labels) const {
-    perform_sorter_checks(labels);
-
     // Throw a meaningful error if sorting by energy is requested as this might be a common mistake
     if (std::find(labels.begin(), labels.end(), TransformationType::SORT_BY_ENERGY) !=
         labels.end()) {
@@ -321,8 +306,6 @@ Sorting Basis<Derived>::get_sorter(const std::vector<TransformationType> &labels
 template <typename Derived>
 std::vector<IndicesOfBlock>
 Basis<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &labels) const {
-    perform_sorter_checks(labels);
-
     std::set<TransformationType> unique_labels(labels.begin(), labels.end());
     perform_blocks_checks(unique_labels);
 

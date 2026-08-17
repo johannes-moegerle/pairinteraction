@@ -81,7 +81,6 @@ public:
     std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<TransformationType> &labels) const override;
 
-    void perform_sorter_checks(const std::vector<TransformationType> &labels) const;
     void perform_blocks_checks(const std::set<TransformationType> &unique_labels) const;
     void get_sorter_without_checks(const std::vector<TransformationType> &labels,
                                    Sorting &transformation) const;

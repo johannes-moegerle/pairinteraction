@@ -3,8 +3,6 @@
 
 #include "pairinteraction/interfaces/TransformationBuilderInterface.hpp"
 
-#include "pairinteraction/enums/TransformationType.hpp"
-
 namespace pairinteraction {
 
 IndicesOfBlock::IndicesOfBlock(size_t start, size_t end) : start(start), end(end) {}

@@ -90,8 +90,6 @@ Sorting System<Derived>::get_sorter(const std::vector<TransformationType> &label
         hamiltonian_requires_construction = false;
     }
 
-    basis->perform_sorter_checks(labels);
-
     auto it = std::find(labels.begin(), labels.end(), TransformationType::SORT_BY_ENERGY);
     std::vector<TransformationType> before_energy(labels.begin(), it);
     bool contains_energy = (it != labels.end());
@@ -133,8 +131,6 @@ System<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &la
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
     }
-
-    basis->perform_sorter_checks(labels);
 
     std::set<TransformationType> unique_labels(labels.begin(), labels.end());
     basis->perform_blocks_checks(unique_labels);

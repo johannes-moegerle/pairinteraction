@@ -12,10 +12,8 @@ using namespace pairinteraction;
 
 void bind_transformation_type(nb::module_ &m) {
     nb::enum_<TransformationType>(m, "TransformationType")
-        .value("CANONICAL_ORDER", TransformationType::CANONICAL_ORDER)
         .value("SORT_BY_QUANTUM_NUMBER_F", TransformationType::SORT_BY_QUANTUM_NUMBER_F)
         .value("SORT_BY_QUANTUM_NUMBER_M", TransformationType::SORT_BY_QUANTUM_NUMBER_M)
         .value("SORT_BY_PARITY", TransformationType::SORT_BY_PARITY)
-        .value("SORT_BY_ENERGY", TransformationType::SORT_BY_ENERGY)
-        .value("ARBITRARY", TransformationType::ARBITRARY);
+        .value("SORT_BY_ENERGY", TransformationType::SORT_BY_ENERGY);
 }
