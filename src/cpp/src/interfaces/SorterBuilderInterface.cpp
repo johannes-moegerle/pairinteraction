@@ -34,8 +34,4 @@ std::vector<IndicesOfBlock> IndicesOfBlocksCreator::create() const {
 size_t IndicesOfBlocksCreator::size() const {
     return boundaries.empty() ? 0 : boundaries.size() - 1;
 }
-
-// Explicit instantiations
-template class SorterBuilderInterface<double>;
-template class SorterBuilderInterface<std::complex<double>>;
 } // namespace pairinteraction

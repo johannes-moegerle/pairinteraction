@@ -29,7 +29,7 @@ template <typename T>
 static void declare_basis(nb::module_ &m, std::string const &type_name) {
     std::string pyclass_name = "Basis" + type_name;
     using scalar_t = typename Basis<T>::scalar_t;
-    nb::class_<Basis<T>, SorterBuilderInterface<scalar_t>> pyclass(m, pyclass_name.c_str());
+    nb::class_<Basis<T>, SorterBuilderInterface> pyclass(m, pyclass_name.c_str());
     pyclass.def("get_kets", &Basis<T>::get_kets)
         .def("get_ket", &Basis<T>::get_ket)
         .def("get_state", &Basis<T>::get_state)

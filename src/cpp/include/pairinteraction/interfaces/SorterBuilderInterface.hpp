@@ -4,10 +4,8 @@
 #pragma once
 
 #include "pairinteraction/utils/eigen_assertion.hpp"
-#include "pairinteraction/utils/traits.hpp"
 
-#include <Eigen/SparseCore>
-#include <complex>
+#include <Eigen/Core>
 #include <initializer_list>
 #include <set>
 #include <vector>
@@ -33,20 +31,12 @@ private:
     std::set<size_t> boundaries;
 };
 
-template <typename Scalar>
 class SorterBuilderInterface {
 public:
-    static_assert(traits::NumTraits<Scalar>::from_floating_point_v);
-
-    using real_t = typename traits::NumTraits<Scalar>::real_t;
-
     virtual ~SorterBuilderInterface() = default;
     virtual Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
     get_sorter(const std::vector<SorterType> &labels) const = 0;
     virtual std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<SorterType> &labels) const = 0;
 };
-
-extern template class SorterBuilderInterface<double>;
-extern template class SorterBuilderInterface<std::complex<double>>;
 } // namespace pairinteraction

@@ -35,7 +35,7 @@ enum class SorterType : unsigned char;
  */
 
 template <typename Derived>
-class Basis : public SorterBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
+class Basis : public SorterBuilderInterface {
 public:
     using scalar_t = typename traits::CrtpTraits<Derived>::scalar_t;
     using real_t = typename traits::CrtpTraits<Derived>::real_t;

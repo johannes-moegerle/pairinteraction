@@ -21,7 +21,7 @@ template <typename Scalar>
 class DiagonalizerInterface;
 
 template <typename Derived>
-class System : public SorterBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
+class System : public SorterBuilderInterface {
 public:
     using scalar_t = typename traits::CrtpTraits<Derived>::scalar_t;
     using real_t = typename traits::CrtpTraits<Derived>::real_t;

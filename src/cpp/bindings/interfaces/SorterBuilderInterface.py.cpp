@@ -5,12 +5,7 @@
 
 #include "pairinteraction/interfaces/SorterBuilderInterface.hpp"
 
-#include <nanobind/eigen/dense.h>
-#include <nanobind/eigen/sparse.h>
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/array.h>
-#include <nanobind/stl/complex.h>
-#include <nanobind/stl/vector.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -33,16 +28,13 @@ static void declare_indices_of_blocks_creator(nb::module_ &m) {
     nb::class_<IndicesOfBlocksCreator> pyclass(m, "IndicesOfBlocksCreator");
 }
 
-template <typename T>
-static void declare_sorter_builder_interface(nb::module_ &m, std::string const &type_name) {
-    std::string pyclass_name = "SorterBuilderInterface" + type_name;
-    nb::class_<SorterBuilderInterface<T>> pyclass(m, pyclass_name.c_str());
+static void declare_sorter_builder_interface(nb::module_ &m) {
+    nb::class_<SorterBuilderInterface> pyclass(m, "SorterBuilderInterface");
 }
 
 void bind_sorter_builder_interface(nb::module_ &m) {
     declare_permutation_matrix(m);
     declare_indices_of_blocks(m);
     declare_indices_of_blocks_creator(m);
-    declare_sorter_builder_interface<double>(m, "Real");
-    declare_sorter_builder_interface<std::complex<double>>(m, "Complex");
+    declare_sorter_builder_interface(m);
 }
