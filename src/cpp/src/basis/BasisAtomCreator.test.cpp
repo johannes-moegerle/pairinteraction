@@ -14,6 +14,7 @@
 #include "pairinteraction/system/SystemAtom.hpp"
 
 #include <doctest/doctest.h>
+#include <stdexcept>
 
 namespace pairinteraction {
 
@@ -107,6 +108,41 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
     auto transformed = basis->transformed(matrix);
     auto transformation = transformed->get_transformation();
     DOCTEST_CHECK(transformation.transformation_type.back() == TransformationType::ARBITRARY);
+}
+
+DOCTEST_TEST_CASE("a basis is canonical if its coefficients are the identity matrix") {
+    auto &database = Database::get_global_instance();
+
+    auto basis = BasisAtomCreator<double>()
+                     .set_species("Rb")
+                     .restrict_quantum_number("n", 60, 60)
+                     .restrict_quantum_number("l", 0, 1)
+                     .create(database);
+
+    DOCTEST_CHECK(basis->is_canonical());
+
+    auto dim = static_cast<long>(basis->get_number_of_states());
+
+    // Explicitly stored zeros must not affect the result
+    Eigen::SparseMatrix<double, Eigen::RowMajor> identity_with_zeros(dim, dim);
+    identity_with_zeros.reserve(Eigen::VectorXi::Constant(dim, 2));
+    for (long i = 0; i < dim; ++i) {
+        identity_with_zeros.insert(i, i) = 1;
+        identity_with_zeros.insert(i, (i + 1) % dim) = 0;
+    }
+    identity_with_zeros.makeCompressed();
+    DOCTEST_CHECK(identity_with_zeros.nonZeros() > dim);
+    DOCTEST_CHECK(basis->copy_with_coefficients(identity_with_zeros)->is_canonical());
+
+    // A basis whose states are a non-trivial superposition of kets is not canonical
+    Eigen::SparseMatrix<double, Eigen::RowMajor> non_identity(dim, dim);
+    non_identity.setIdentity();
+    non_identity.coeffRef(0, 0) = 0.5;
+    DOCTEST_CHECK_FALSE(basis->copy_with_coefficients(non_identity)->is_canonical());
+
+    // Sorting the basis makes it non-canonical
+    auto sorted = basis->transformed(basis->get_sorter({SorterType::SORT_BY_PARITY}));
+    DOCTEST_CHECK_FALSE(sorted->is_canonical());
 }
 
 DOCTEST_TEST_CASE("calculation of matrix elements") {

@@ -454,8 +454,28 @@ std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
 
 template <typename Derived>
 bool Basis<Derived>::is_canonical() const {
-    return get_transformation().transformation_type ==
-        std::vector<TransformationType>{TransformationType::CANONICAL_ORDER};
+    constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
+
+    // The basis is canonical if and only if its coefficient matrix is the identity matrix, i.e.,
+    // if the i-th state is the i-th ket
+    if (coefficients.matrix.rows() != coefficients.matrix.cols()) {
+        return false;
+    }
+
+    Eigen::Index num_ones = 0;
+    for (Eigen::Index row = 0; row < coefficients.matrix.outerSize(); ++row) {
+        for (typename Eigen::SparseMatrix<scalar_t, Eigen::RowMajor>::InnerIterator it(
+                 coefficients.matrix, row);
+             it; ++it) {
+            if (it.row() == it.col() &&
+                std::abs(it.value() - static_cast<scalar_t>(1)) <= numerical_precision) {
+                ++num_ones;
+            } else if (std::abs(it.value()) > numerical_precision) {
+                return false;
+            }
+        }
+    }
+    return num_ones == coefficients.matrix.rows();
 }
 
 template <typename Derived>
