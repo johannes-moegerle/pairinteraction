@@ -42,11 +42,11 @@ void Basis<Derived>::perform_blocks_checks(
     const std::set<TransformationType> &unique_labels) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
-    // Throw a meaningful error if getting the blocks by energy is requested as this might be a
-    // common mistake
+    // Blocks of states of equal energy would only be blocks of an already diagonal Hamiltonian,
+    // which does not need to be diagonalized block by block anymore.
     if (unique_labels.contains(TransformationType::SORT_BY_ENERGY)) {
-        throw std::invalid_argument("States do not store the energy and thus no energy blocks can "
-                                    "be obtained. Use an energy operator instead.");
+        throw std::invalid_argument("Blocks cannot be obtained by the energy. Note that sorting "
+                                    "a system by the energy is supported nevertheless.");
     }
 
     // Check if the states are labeled by the requested labels

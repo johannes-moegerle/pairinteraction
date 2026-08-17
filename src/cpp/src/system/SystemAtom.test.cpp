@@ -12,6 +12,7 @@
 #include "pairinteraction/diagonalize/DiagonalizerLapackeEvr.hpp"
 #include "pairinteraction/diagonalize/diagonalize.hpp"
 #include "pairinteraction/enums/FloatType.hpp"
+#include "pairinteraction/enums/TransformationType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetAtomCreator.hpp"
 
@@ -19,6 +20,7 @@
 #include <cmath>
 #include <doctest/doctest.h>
 #include <fmt/ranges.h>
+#include <stdexcept>
 
 namespace pairinteraction {
 
@@ -399,6 +401,41 @@ DOCTEST_TEST_CASE("atom ion interaction") {
     for (size_t i = 0; i < num_energies; ++i) {
         DOCTEST_CHECK(std::abs(energies3[i] - energies2[i]) * HARTREE_IN_GHZ > 1e-6);
     }
+}
+
+DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
+    auto &database = Database::get_global_instance();
+
+    auto basis = BasisAtomCreator<double>()
+                     .set_species("Rb")
+                     .restrict_quantum_number("n", 60, 60)
+                     .restrict_quantum_number("l", 0, 1)
+                     .create(database);
+
+    auto system = SystemAtom<double>(basis);
+    system.set_electric_field({0, 0, 0.0001});
+
+    // The electric field conserves the quantum number m, thus the Hamiltonian can be
+    // block-diagonalized by m
+    system.transform(system.get_sorter({TransformationType::SORT_BY_QUANTUM_NUMBER_M}));
+    auto blocks = system.get_indices_of_blocks({TransformationType::SORT_BY_QUANTUM_NUMBER_M});
+    DOCTEST_CHECK(blocks.size() > 1);
+
+    size_t expected_start = 0;
+    for (const auto &block : blocks) {
+        DOCTEST_MESSAGE("Block from ", block.start, " to ", block.end);
+        DOCTEST_CHECK(block.start == expected_start);
+        expected_start = block.end;
+    }
+    DOCTEST_CHECK(expected_start == basis->get_number_of_states());
+
+    // Blocks are obtained to diagonalize the Hamiltonian block by block. Because energy blocks
+    // would require an already diagonal Hamiltonian, they cannot be obtained ...
+    DOCTEST_CHECK_THROWS_AS(system.get_indices_of_blocks({TransformationType::SORT_BY_ENERGY}),
+                            std::invalid_argument);
+
+    // ... whereas sorting by the energy is supported
+    DOCTEST_CHECK_NOTHROW(system.get_sorter({TransformationType::SORT_BY_ENERGY}));
 }
 
 } // namespace pairinteraction

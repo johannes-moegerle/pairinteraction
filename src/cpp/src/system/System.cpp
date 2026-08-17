@@ -139,26 +139,10 @@ System<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &la
     std::set<TransformationType> unique_labels(labels.begin(), labels.end());
     basis->perform_blocks_checks(unique_labels);
 
-    auto it = unique_labels.find(TransformationType::SORT_BY_ENERGY);
-    bool contains_energy = (it != unique_labels.end());
-    if (contains_energy) {
-        unique_labels.erase(it);
-    }
-
     IndicesOfBlocksCreator blocks_creator({0, static_cast<size_t>(matrix.rows())});
 
     if (!unique_labels.empty()) {
         basis->get_indices_of_blocks_without_checks(unique_labels, blocks_creator);
-    }
-
-    if (contains_energy && matrix.rows() > 0) {
-        scalar_t last_energy = std::real(matrix.coeff(0, 0));
-        for (int i = 0; i < matrix.rows(); ++i) {
-            if (std::real(matrix.coeff(i, i)) != last_energy) {
-                blocks_creator.add(i);
-                last_energy = std::real(matrix.coeff(i, i));
-            }
-        }
     }
 
     return blocks_creator.create();
