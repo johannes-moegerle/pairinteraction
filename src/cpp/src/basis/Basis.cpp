@@ -13,8 +13,11 @@
 #include "pairinteraction/utils/eigen_assertion.hpp"
 #include "pairinteraction/utils/eigen_compat.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <set>
+#include <tuple>
+#include <vector>
 
 namespace pairinteraction {
 
@@ -37,23 +40,62 @@ void Basis<Derived>::perform_sorter_checks(const std::vector<TransformationType>
 template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(
     const std::set<TransformationType> &unique_labels) const {
-    // Check if the states are sorted by the requested labels
-    std::set<TransformationType> unique_labels_present;
-    for (const auto &label : get_transformation().transformation_type) {
-        if (!utils::is_sorting(label) || unique_labels_present.size() >= unique_labels.size()) {
-            break;
-        }
-        unique_labels_present.insert(label);
-    }
-    if (unique_labels != unique_labels_present) {
-        throw std::invalid_argument("The states are not sorted by the requested labels.");
-    }
+    constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
     // Throw a meaningful error if getting the blocks by energy is requested as this might be a
     // common mistake
     if (unique_labels.contains(TransformationType::SORT_BY_ENERGY)) {
         throw std::invalid_argument("States do not store the energy and thus no energy blocks can "
                                     "be obtained. Use an energy operator instead.");
+    }
+
+    // Check if the states are labeled by the requested labels
+    const bool by_f = unique_labels.contains(TransformationType::SORT_BY_QUANTUM_NUMBER_F);
+    const bool by_m = unique_labels.contains(TransformationType::SORT_BY_QUANTUM_NUMBER_M);
+    const bool by_parity = unique_labels.contains(TransformationType::SORT_BY_PARITY);
+
+    if (by_f && !_has_quantum_number_f) {
+        throw std::invalid_argument(
+            "States cannot be labeled and thus not sorted by the quantum number f.");
+    }
+    if (by_m && !_has_quantum_number_m) {
+        throw std::invalid_argument(
+            "States cannot be labeled and thus not sorted by the quantum number m.");
+    }
+    if (by_parity && !_has_parity) {
+        throw std::invalid_argument("States cannot be labeled and thus not sorted by the parity.");
+    }
+
+    // Check if the states are sorted by the requested labels, i.e., if states that share the same
+    // labels are contiguous. Otherwise, states belonging to the same block would be scattered over
+    // several blocks and couplings between them would be lost.
+    using label_t = std::tuple<real_t, real_t, Parity>;
+    auto label_of = [&](Eigen::Index i) {
+        return label_t{by_f ? state_index_to_quantum_number_f[i] : 0,
+                       by_m ? state_index_to_quantum_number_m[i] : 0,
+                       by_parity ? state_index_to_parity[i] : Parity::UNKNOWN};
+    };
+    auto is_equal = [](const label_t &a, const label_t &b) {
+        return std::abs(std::get<0>(a) - std::get<0>(b)) <= numerical_precision &&
+            std::abs(std::get<1>(a) - std::get<1>(b)) <= numerical_precision &&
+            std::get<2>(a) == std::get<2>(b);
+    };
+
+    // Collect the labels of the contiguous blocks of states
+    std::vector<label_t> labels_of_blocks;
+    for (Eigen::Index i = 0; i < coefficients.matrix.cols(); ++i) {
+        label_t label = label_of(i);
+        if (labels_of_blocks.empty() || !is_equal(labels_of_blocks.back(), label)) {
+            labels_of_blocks.push_back(label);
+        }
+    }
+
+    // If the states are sorted, no two blocks share the same labels
+    std::sort(labels_of_blocks.begin(), labels_of_blocks.end());
+    for (size_t i = 1; i < labels_of_blocks.size(); ++i) {
+        if (is_equal(labels_of_blocks[i - 1], labels_of_blocks[i])) {
+            throw std::invalid_argument("The states are not sorted by the requested labels.");
+        }
     }
 }
 
