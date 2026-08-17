@@ -15,6 +15,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <cstdint>
 #include <set>
 #include <tuple>
 #include <vector>
@@ -26,8 +28,6 @@ class BasisAtom;
 
 template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_labels) const {
-    constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
-
     // Currently, since states in a basis dont store the energy, they cannot be sorted by energy.
     if (unique_labels.contains(SorterType::SORT_BY_ENERGY)) {
         throw std::invalid_argument("Blocks cannot be obtained by the energy. Note that sorting "
@@ -54,33 +54,28 @@ void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_la
     // Check if the states are sorted by the requested labels, i.e., if states that share the same
     // labels are contiguous. Otherwise, states belonging to the same block would be scattered over
     // several blocks and couplings between them would be lost.
-    using label_t = std::tuple<real_t, real_t, Parity>;
+    // The quantum numbers f and m are half-integers, thus doubling them yields an exact integer
+    using label_t = std::tuple<int64_t, int64_t, Parity>;
     auto label_of = [&](Eigen::Index i) {
-        return label_t{by_f ? state_index_to_quantum_number_f[i] : 0,
-                       by_m ? state_index_to_quantum_number_m[i] : 0,
+        return label_t{by_f ? std::llround(2 * state_index_to_quantum_number_f[i]) : 0,
+                       by_m ? std::llround(2 * state_index_to_quantum_number_m[i]) : 0,
                        by_parity ? state_index_to_parity[i] : Parity::UNKNOWN};
-    };
-    auto is_equal = [](const label_t &a, const label_t &b) {
-        return std::abs(std::get<0>(a) - std::get<0>(b)) <= numerical_precision &&
-            std::abs(std::get<1>(a) - std::get<1>(b)) <= numerical_precision &&
-            std::get<2>(a) == std::get<2>(b);
     };
 
     // Collect the labels of the contiguous blocks of states
     std::vector<label_t> labels_of_blocks;
     for (Eigen::Index i = 0; i < coefficients.cols(); ++i) {
         label_t label = label_of(i);
-        if (labels_of_blocks.empty() || !is_equal(labels_of_blocks.back(), label)) {
+        if (labels_of_blocks.empty() || labels_of_blocks.back() != label) {
             labels_of_blocks.push_back(label);
         }
     }
 
     // If the states are sorted, no two blocks share the same labels
     std::sort(labels_of_blocks.begin(), labels_of_blocks.end());
-    for (size_t i = 1; i < labels_of_blocks.size(); ++i) {
-        if (is_equal(labels_of_blocks[i - 1], labels_of_blocks[i])) {
-            throw std::invalid_argument("The states are not sorted by the requested labels.");
-        }
+    if (std::adjacent_find(labels_of_blocks.begin(), labels_of_blocks.end()) !=
+        labels_of_blocks.end()) {
+        throw std::invalid_argument("The states are not sorted by the requested labels.");
     }
 }
 
