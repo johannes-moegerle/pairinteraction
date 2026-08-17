@@ -312,6 +312,10 @@ void Basis<Derived>::get_sorter_without_checks(
             "Note that sorting a system by the energy is supported nevertheless.");
     }
 
+    if (coefficients.cols() == 0) {
+        return;
+    }
+
     int *perm_begin = sorter.indices().data();
     int *perm_end = perm_begin + coefficients.cols();
     const int *perm_back = perm_end - 1;
@@ -376,6 +380,10 @@ template <typename Derived>
 void Basis<Derived>::get_indices_of_blocks_without_checks(
     const std::set<SorterType> &unique_labels, IndicesOfBlocksCreator &blocks_creator) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
+
+    if (coefficients.cols() == 0) {
+        return;
+    }
 
     auto last_quantum_number_f = state_index_to_quantum_number_f[0];
     auto last_quantum_number_m = state_index_to_quantum_number_m[0];

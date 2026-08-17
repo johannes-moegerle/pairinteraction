@@ -486,32 +486,53 @@ DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
         }
     }
 
-    // Sorting by the parity and the quantum number m makes the parity the primary criterion
+    // If the energy is enclosed by other labels, the labels before the energy take precedence over
+    // the energy and the energy takes precedence over the labels after it
     {
         auto system = SystemAtom<double>(basis);
         system.set_electric_field({0, 0, 0.0001});
-        system.transform(system.get_sorter({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M}));
+        system.transform(system.get_sorter(
+            {SorterType::PARITY, SorterType::ENERGY, SorterType::QUANTUM_NUMBER_M}));
 
         auto sorted_basis = system.get_basis();
         size_t num_states = sorted_basis->get_number_of_states();
+        const auto &matrix = system.get_matrix();
+
+        auto parity = [&](size_t i) { return sorted_basis->get_parity(i); };
+        auto energy = [&](size_t i) {
+            return matrix.coeff(static_cast<long>(i), static_cast<long>(i));
+        };
+        auto quantum_number_m = [&](size_t i) { return sorted_basis->get_quantum_number_m(i); };
 
         // The parity is the primary criterion, thus it is ascending globally ...
         for (size_t i = 1; i < num_states; ++i) {
-            DOCTEST_CHECK(sorted_basis->get_parity(i - 1) <= sorted_basis->get_parity(i));
+            DOCTEST_CHECK(parity(i - 1) <= parity(i));
         }
 
-        // ... whereas the quantum number m is only ascending within a block of equal parity
+        // ... the energy is only ascending within a block of equal parity ...
         for (size_t i = 1; i < num_states; ++i) {
-            if (sorted_basis->get_parity(i - 1) == sorted_basis->get_parity(i)) {
-                DOCTEST_CHECK(sorted_basis->get_quantum_number_m(i - 1) <=
-                              sorted_basis->get_quantum_number_m(i));
+            if (parity(i - 1) == parity(i)) {
+                DOCTEST_CHECK(energy(i - 1) <= energy(i));
             }
         }
+
+        // ... and the quantum number m only breaks ties between states of equal parity and energy
+        size_t num_tie_breaks = 0;
+        for (size_t i = 1; i < num_states; ++i) {
+            if (parity(i - 1) == parity(i) && energy(i - 1) == energy(i)) {
+                DOCTEST_CHECK(quantum_number_m(i - 1) <= quantum_number_m(i));
+                ++num_tie_breaks;
+            }
+        }
+
+        // Check that the basis contains degenerate states so that the tie breaking by m above is
+        // not vacuous
+        DOCTEST_CHECK(num_tie_breaks > 0);
 
         // If m was the primary criterion, m would be ascending globally instead
         bool m_ascending_globally = true;
         for (size_t i = 1; i < num_states; ++i) {
-            if (sorted_basis->get_quantum_number_m(i - 1) > sorted_basis->get_quantum_number_m(i)) {
+            if (quantum_number_m(i - 1) > quantum_number_m(i)) {
                 m_ascending_globally = false;
             }
         }
