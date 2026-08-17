@@ -67,8 +67,7 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
                               .create(database);
 
     // Sort the basis by parity and the m quantum number
-    auto sorter = basis_unsorted->get_sorter(
-        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M});
+    auto sorter = basis_unsorted->get_sorter({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M});
     auto basis = basis_unsorted->transformed(sorter);
 
     // Check if the basis is properly sorted
@@ -87,8 +86,7 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
     }
 
     // Check that the blocks are correctly determined
-    auto blocks = basis->get_indices_of_blocks(
-        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M});
+    auto blocks = basis->get_indices_of_blocks({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M});
     std::vector<size_t> expected_start = {0, 4, 8, 11};
 
     DOCTEST_CHECK(blocks.size() == expected_start.size());
@@ -140,7 +138,7 @@ DOCTEST_TEST_CASE("a basis is canonical if its coefficients are the identity mat
     DOCTEST_CHECK_FALSE(basis->copy_with_coefficients(non_identity)->is_canonical());
 
     // Sorting the basis makes it non-canonical
-    auto sorted = basis->transformed(basis->get_sorter({SorterType::SORT_BY_PARITY}));
+    auto sorted = basis->transformed(basis->get_sorter({SorterType::PARITY}));
     DOCTEST_CHECK_FALSE(sorted->is_canonical());
 }
 
@@ -155,23 +153,23 @@ DOCTEST_TEST_CASE("blocks can only be obtained if the states are sorted") {
 
     // In the unsorted basis, states that share the same labels are scattered over the basis. They
     // would end up in several blocks and couplings between them would be lost.
-    DOCTEST_CHECK_THROWS_AS(basis_unsorted->get_indices_of_blocks(
-                                {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M}),
-                            std::invalid_argument);
+    DOCTEST_CHECK_THROWS_AS(
+        basis_unsorted->get_indices_of_blocks({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M}),
+        std::invalid_argument);
 
-    auto basis = basis_unsorted->transformed(basis_unsorted->get_sorter(
-        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+    auto basis = basis_unsorted->transformed(
+        basis_unsorted->get_sorter({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M}));
 
     // After sorting, the states of equal parity and m are contiguous ...
-    DOCTEST_CHECK_NOTHROW(basis->get_indices_of_blocks(
-        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+    DOCTEST_CHECK_NOTHROW(
+        basis->get_indices_of_blocks({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M}));
 
     // ... and so are the states of equal parity because the parity is the primary criterion
-    DOCTEST_CHECK_NOTHROW(basis->get_indices_of_blocks({SorterType::SORT_BY_PARITY}));
+    DOCTEST_CHECK_NOTHROW(basis->get_indices_of_blocks({SorterType::PARITY}));
 
     // The states of equal m are not contiguous, however, because m only breaks ties between states
     // of equal parity
-    DOCTEST_CHECK_THROWS_AS(basis->get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_M}),
+    DOCTEST_CHECK_THROWS_AS(basis->get_indices_of_blocks({SorterType::QUANTUM_NUMBER_M}),
                             std::invalid_argument);
 
     // If the states are not labeled at all, no blocks can be obtained either
@@ -179,11 +177,10 @@ DOCTEST_TEST_CASE("blocks can only be obtained if the states are sorted") {
     Eigen::SparseMatrix<double, Eigen::RowMajor> identity(dim, dim);
     identity.setIdentity();
     auto unlabeled = basis->copy_with_coefficients(identity);
-    DOCTEST_CHECK_THROWS_AS(unlabeled->get_indices_of_blocks({SorterType::SORT_BY_PARITY}),
+    DOCTEST_CHECK_THROWS_AS(unlabeled->get_indices_of_blocks({SorterType::PARITY}),
                             std::invalid_argument);
-    DOCTEST_CHECK_THROWS_AS(
-        unlabeled->get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_F}),
-        std::invalid_argument);
+    DOCTEST_CHECK_THROWS_AS(unlabeled->get_indices_of_blocks({SorterType::QUANTUM_NUMBER_F}),
+                            std::invalid_argument);
 }
 
 DOCTEST_TEST_CASE("calculation of matrix elements") {

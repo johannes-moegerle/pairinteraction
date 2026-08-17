@@ -418,8 +418,8 @@ DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
 
     // The electric field conserves the quantum number m, thus the Hamiltonian can be
     // block-diagonalized by m
-    system.transform(system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M}));
-    auto blocks = system.get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_M});
+    system.transform(system.get_sorter({SorterType::QUANTUM_NUMBER_M}));
+    auto blocks = system.get_indices_of_blocks({SorterType::QUANTUM_NUMBER_M});
     DOCTEST_CHECK(blocks.size() > 1);
 
     size_t expected_start = 0;
@@ -432,19 +432,17 @@ DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
 
     // Blocks are obtained to diagonalize the Hamiltonian block by block. Because energy blocks
     // would require an already diagonal Hamiltonian, they cannot be obtained ...
-    DOCTEST_CHECK_THROWS_AS(system.get_indices_of_blocks({SorterType::SORT_BY_ENERGY}),
+    DOCTEST_CHECK_THROWS_AS(system.get_indices_of_blocks({SorterType::ENERGY}),
                             std::invalid_argument);
 
     // ... whereas sorting by the energy is supported
-    DOCTEST_CHECK_NOTHROW(system.get_sorter({SorterType::SORT_BY_ENERGY}));
+    DOCTEST_CHECK_NOTHROW(system.get_sorter({SorterType::ENERGY}));
 
     // A repeated label cannot influence the order anymore and must be ignored instead of
     // terminating the program
+    DOCTEST_CHECK_NOTHROW(system.get_sorter({SorterType::ENERGY, SorterType::ENERGY}));
     DOCTEST_CHECK_NOTHROW(
-        system.get_sorter({SorterType::SORT_BY_ENERGY, SorterType::SORT_BY_ENERGY}));
-    DOCTEST_CHECK_NOTHROW(
-        system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M, SorterType::SORT_BY_ENERGY,
-                           SorterType::SORT_BY_ENERGY}));
+        system.get_sorter({SorterType::QUANTUM_NUMBER_M, SorterType::ENERGY, SorterType::ENERGY}));
 }
 
 DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
@@ -460,11 +458,10 @@ DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
     {
         auto system = SystemAtom<double>(basis);
         system.set_electric_field({0, 0, 0.0001});
-        system.transform(
-            system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M, SorterType::SORT_BY_ENERGY}));
+        system.transform(system.get_sorter({SorterType::QUANTUM_NUMBER_M, SorterType::ENERGY}));
 
         // Sorting by m first means that states of equal m are contiguous ...
-        auto blocks = system.get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_M});
+        auto blocks = system.get_indices_of_blocks({SorterType::QUANTUM_NUMBER_M});
         DOCTEST_CHECK(blocks.size() > 1);
 
         // ... and that within each block, the energies are ascending
@@ -481,8 +478,7 @@ DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
     {
         auto system = SystemAtom<double>(basis);
         system.set_electric_field({0, 0, 0.0001});
-        system.transform(
-            system.get_sorter({SorterType::SORT_BY_ENERGY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+        system.transform(system.get_sorter({SorterType::ENERGY, SorterType::QUANTUM_NUMBER_M}));
 
         const auto &matrix = system.get_matrix();
         for (long i = 1; i < matrix.rows(); ++i) {
@@ -494,8 +490,7 @@ DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
     {
         auto system = SystemAtom<double>(basis);
         system.set_electric_field({0, 0, 0.0001});
-        system.transform(
-            system.get_sorter({SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+        system.transform(system.get_sorter({SorterType::PARITY, SorterType::QUANTUM_NUMBER_M}));
 
         auto sorted_basis = system.get_basis();
         size_t num_states = sorted_basis->get_number_of_states();

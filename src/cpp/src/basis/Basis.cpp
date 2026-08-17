@@ -29,15 +29,15 @@ class BasisAtom;
 template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_labels) const {
     // Currently, since states in a basis dont store the energy, they cannot be sorted by energy.
-    if (unique_labels.contains(SorterType::SORT_BY_ENERGY)) {
+    if (unique_labels.contains(SorterType::ENERGY)) {
         throw std::invalid_argument("Blocks cannot be obtained by the energy. Note that sorting "
                                     "a system by the energy is supported nevertheless.");
     }
 
     // Check if the states are labeled by the requested labels
-    const bool by_f = unique_labels.contains(SorterType::SORT_BY_QUANTUM_NUMBER_F);
-    const bool by_m = unique_labels.contains(SorterType::SORT_BY_QUANTUM_NUMBER_M);
-    const bool by_parity = unique_labels.contains(SorterType::SORT_BY_PARITY);
+    const bool by_f = unique_labels.contains(SorterType::QUANTUM_NUMBER_F);
+    const bool by_m = unique_labels.contains(SorterType::QUANTUM_NUMBER_M);
+    const bool by_parity = unique_labels.contains(SorterType::PARITY);
 
     if (by_f && !_has_quantum_number_f) {
         throw std::invalid_argument(
@@ -306,7 +306,7 @@ void Basis<Derived>::get_sorter_without_checks(
     // Currently, since states in a basis dont store the energy, they cannot be sorted by energy.
     // Checking this upfront also guarantees that the switch statements below only encounter labels
     // they can handle.
-    if (std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY) != labels.end()) {
+    if (std::find(labels.begin(), labels.end(), SorterType::ENERGY) != labels.end()) {
         throw std::invalid_argument(
             "States in a basis do not store the energy and thus can not be sorted by it. "
             "Note that sorting a system by the energy is supported nevertheless.");
@@ -321,18 +321,18 @@ void Basis<Derived>::get_sorter_without_checks(
     std::stable_sort(perm_begin, perm_end, [&](int a, int b) {
         for (const auto &label : labels) {
             switch (label) {
-            case SorterType::SORT_BY_PARITY:
+            case SorterType::PARITY:
                 if (state_index_to_parity[a] != state_index_to_parity[b]) {
                     return state_index_to_parity[a] < state_index_to_parity[b];
                 }
                 break;
-            case SorterType::SORT_BY_QUANTUM_NUMBER_M:
+            case SorterType::QUANTUM_NUMBER_M:
                 if (std::abs(state_index_to_quantum_number_m[a] -
                              state_index_to_quantum_number_m[b]) > numerical_precision) {
                     return state_index_to_quantum_number_m[a] < state_index_to_quantum_number_m[b];
                 }
                 break;
-            case SorterType::SORT_BY_QUANTUM_NUMBER_F:
+            case SorterType::QUANTUM_NUMBER_F:
                 if (std::abs(state_index_to_quantum_number_f[a] -
                              state_index_to_quantum_number_f[b]) > numerical_precision) {
                     return state_index_to_quantum_number_f[a] < state_index_to_quantum_number_f[b];
@@ -348,19 +348,19 @@ void Basis<Derived>::get_sorter_without_checks(
     // Check for invalid values
     for (const auto &label : labels) {
         switch (label) {
-        case SorterType::SORT_BY_PARITY:
+        case SorterType::PARITY:
             if (state_index_to_parity[*perm_back] == Parity::UNKNOWN) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the parity.");
             }
             break;
-        case SorterType::SORT_BY_QUANTUM_NUMBER_M:
+        case SorterType::QUANTUM_NUMBER_M:
             if (state_index_to_quantum_number_m[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number m.");
             }
             break;
-        case SorterType::SORT_BY_QUANTUM_NUMBER_F:
+        case SorterType::QUANTUM_NUMBER_F:
             if (state_index_to_quantum_number_f[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number f.");
@@ -384,19 +384,19 @@ void Basis<Derived>::get_indices_of_blocks_without_checks(
     set_task_status("Identifying basis blocks...");
     for (int i = 0; i < coefficients.cols(); ++i) {
         for (auto label : unique_labels) {
-            if (label == SorterType::SORT_BY_QUANTUM_NUMBER_F &&
+            if (label == SorterType::QUANTUM_NUMBER_F &&
                 std::abs(state_index_to_quantum_number_f[i] - last_quantum_number_f) >
                     numerical_precision) {
                 blocks_creator.add(i);
                 break;
             }
-            if (label == SorterType::SORT_BY_QUANTUM_NUMBER_M &&
+            if (label == SorterType::QUANTUM_NUMBER_M &&
                 std::abs(state_index_to_quantum_number_m[i] - last_quantum_number_m) >
                     numerical_precision) {
                 blocks_creator.add(i);
                 break;
             }
-            if (label == SorterType::SORT_BY_PARITY && state_index_to_parity[i] != last_parity) {
+            if (label == SorterType::PARITY && state_index_to_parity[i] != last_parity) {
                 blocks_creator.add(i);
                 break;
             }

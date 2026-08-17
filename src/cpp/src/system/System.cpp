@@ -91,7 +91,7 @@ System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
         }
     }
 
-    auto it = std::find(unique_labels.begin(), unique_labels.end(), SorterType::SORT_BY_ENERGY);
+    auto it = std::find(unique_labels.begin(), unique_labels.end(), SorterType::ENERGY);
     std::vector<SorterType> before_energy(unique_labels.begin(), it);
     bool contains_energy = (it != unique_labels.end());
     std::vector<SorterType> after_energy(contains_energy ? it + 1 : unique_labels.end(),
@@ -197,7 +197,7 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
 
     if (this->is_diagonal()) {
         if (sort_by_energy && !this->is_diagonal_and_sorted_by_energy()) {
-            transform(get_sorter({SorterType::SORT_BY_ENERGY}));
+            transform(get_sorter({SorterType::ENERGY}));
         }
         return *this;
     }
@@ -328,7 +328,7 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
 
     hamiltonian_is_diagonal = true;
     if (sort_by_energy) {
-        transform(get_sorter({SorterType::SORT_BY_ENERGY}));
+        transform(get_sorter({SorterType::ENERGY}));
     }
 
     return *this;

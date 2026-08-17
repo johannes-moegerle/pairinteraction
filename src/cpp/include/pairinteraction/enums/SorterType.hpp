@@ -4,10 +4,5 @@
 #pragma once
 
 namespace pairinteraction {
-enum class SorterType : unsigned char {
-    SORT_BY_QUANTUM_NUMBER_F,
-    SORT_BY_QUANTUM_NUMBER_M,
-    SORT_BY_PARITY,
-    SORT_BY_ENERGY
-};
+enum class SorterType : unsigned char { QUANTUM_NUMBER_F, QUANTUM_NUMBER_M, PARITY, ENERGY };
 } // namespace pairinteraction
