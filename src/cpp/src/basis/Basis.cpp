@@ -69,7 +69,7 @@ void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_la
 
     // Collect the labels of the contiguous blocks of states
     std::vector<label_t> labels_of_blocks;
-    for (Eigen::Index i = 0; i < coefficients.matrix.cols(); ++i) {
+    for (Eigen::Index i = 0; i < coefficients.cols(); ++i) {
         label_t label = label_of(i);
         if (labels_of_blocks.empty() || !is_equal(labels_of_blocks.back(), label)) {
             labels_of_blocks.push_back(label);
@@ -87,8 +87,8 @@ void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_la
 
 template <typename Derived>
 Basis<Derived>::Basis(ketvec_t &&kets)
-    : kets(std::move(kets)), coefficients{{static_cast<Eigen::Index>(this->kets.size()),
-                                           static_cast<Eigen::Index>(this->kets.size())}} {
+    : kets(std::move(kets)), coefficients(static_cast<Eigen::Index>(this->kets.size()),
+                                          static_cast<Eigen::Index>(this->kets.size())) {
     if (this->kets.empty()) {
         throw std::invalid_argument("The basis must contain at least one element.");
     }
@@ -121,7 +121,7 @@ Basis<Derived>::Basis(ketvec_t &&kets)
             _has_parity = false;
         }
     }
-    coefficients.matrix.setIdentity();
+    coefficients.setIdentity();
 }
 
 template <typename Derived>
@@ -152,23 +152,23 @@ const typename Basis<Derived>::ketvec_t &Basis<Derived>::get_kets() const {
 template <typename Derived>
 const Eigen::SparseMatrix<typename Basis<Derived>::scalar_t, Eigen::RowMajor> &
 Basis<Derived>::get_coefficients() const {
-    return coefficients.matrix;
+    return coefficients;
 }
 
 template <typename Derived>
 std::shared_ptr<const Derived> Basis<Derived>::copy_with_coefficients(
     const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &values) const {
-    if (values.rows() != coefficients.matrix.rows()) {
+    if (values.rows() != coefficients.rows()) {
         throw std::invalid_argument("Incompatible number of rows.");
     }
-    if (values.cols() != coefficients.matrix.cols()) {
+    if (values.cols() != coefficients.cols()) {
         throw std::invalid_argument("Incompatible number of columns.");
     }
 
     // Create a copy of the current object and update the coefficients of the copy
     auto result = std::make_shared<Derived>(derived());
 
-    result->coefficients.matrix = values;
+    result->coefficients = values;
 
     std::fill(result->state_index_to_quantum_number_f.begin(),
               result->state_index_to_quantum_number_f.end(), std::numeric_limits<real_t>::max());
@@ -216,7 +216,7 @@ std::shared_ptr<const Derived> Basis<Derived>::get_state(size_t state_index) con
     auto restricted = std::make_shared<Derived>(derived());
 
     // Restrict the copy to the single requested state
-    restricted->coefficients.matrix = restricted->coefficients.matrix.col(state_index);
+    restricted->coefficients = restricted->coefficients.col(state_index);
 
     restricted->state_index_to_quantum_number_f = {state_index_to_quantum_number_f[state_index]};
     restricted->state_index_to_quantum_number_m = {state_index_to_quantum_number_m[state_index]};
@@ -268,37 +268,30 @@ typename Basis<Derived>::Iterator &Basis<Derived>::Iterator::operator++() {
 
 template <typename Derived>
 size_t Basis<Derived>::get_number_of_states() const {
-    return coefficients.matrix.cols();
+    return coefficients.cols();
 }
 
 template <typename Derived>
 size_t Basis<Derived>::get_number_of_kets() const {
-    return coefficients.matrix.rows();
+    return coefficients.rows();
 }
 
 template <typename Derived>
-const Transformation<typename Basis<Derived>::scalar_t> &
-Basis<Derived>::get_transformation() const {
-    return coefficients;
-}
-
-template <typename Derived>
-Sorting Basis<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
+Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+Basis<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
     // Throw a meaningful error if sorting by energy is requested as this might be a common mistake
     if (std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY) != labels.end()) {
         throw std::invalid_argument("States do not store the energy and thus can not be sorted by "
                                     "the energy. Use an energy operator instead.");
     }
 
-    // Initialize transformation
-    Sorting transformation;
-    transformation.matrix.resize(coefficients.matrix.cols());
-    transformation.matrix.setIdentity();
+    // Initialize the sorter
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> sorter(coefficients.cols());
+    sorter.setIdentity();
 
-    // Get the sorter
-    get_sorter_without_checks(labels, transformation);
+    get_sorter_without_checks(labels, sorter);
 
-    return transformation;
+    return sorter;
 }
 
 template <typename Derived>
@@ -308,19 +301,20 @@ Basis<Derived>::get_indices_of_blocks(const std::vector<SorterType> &labels) con
     perform_blocks_checks(unique_labels);
 
     // Get the blocks
-    IndicesOfBlocksCreator blocks_creator({0, static_cast<size_t>(coefficients.matrix.cols())});
+    IndicesOfBlocksCreator blocks_creator({0, static_cast<size_t>(coefficients.cols())});
     get_indices_of_blocks_without_checks(unique_labels, blocks_creator);
 
     return blocks_creator.create();
 }
 
 template <typename Derived>
-void Basis<Derived>::get_sorter_without_checks(const std::vector<SorterType> &labels,
-                                               Sorting &transformation) const {
+void Basis<Derived>::get_sorter_without_checks(
+    const std::vector<SorterType> &labels,
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
-    int *perm_begin = transformation.matrix.indices().data();
-    int *perm_end = perm_begin + coefficients.matrix.cols();
+    int *perm_begin = sorter.indices().data();
+    int *perm_end = perm_begin + coefficients.cols();
     const int *perm_back = perm_end - 1;
 
     // Sort the vector based on the requested labels
@@ -389,7 +383,7 @@ void Basis<Derived>::get_indices_of_blocks_without_checks(
     auto last_parity = state_index_to_parity[0];
 
     set_task_status("Identifying basis blocks...");
-    for (int i = 0; i < coefficients.matrix.cols(); ++i) {
+    for (int i = 0; i < coefficients.cols(); ++i) {
         for (auto label : unique_labels) {
             if (label == SorterType::SORT_BY_QUANTUM_NUMBER_F &&
                 std::abs(state_index_to_quantum_number_f[i] - last_quantum_number_f) >
@@ -420,8 +414,8 @@ std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
 
     size_t n = kets.size();
 
-    result->coefficients.matrix.resize(n, n);
-    result->coefficients.matrix.setIdentity();
+    result->coefficients.resize(n, n);
+    result->coefficients.setIdentity();
 
     result->state_index_to_quantum_number_f.resize(n);
     result->state_index_to_quantum_number_m.resize(n);
@@ -466,14 +460,14 @@ bool Basis<Derived>::is_canonical() const {
 
     // The basis is canonical if and only if its coefficient matrix is the identity matrix, i.e.,
     // if the i-th state is the i-th ket
-    if (coefficients.matrix.rows() != coefficients.matrix.cols()) {
+    if (coefficients.rows() != coefficients.cols()) {
         return false;
     }
 
     Eigen::Index num_ones = 0;
-    for (Eigen::Index row = 0; row < coefficients.matrix.outerSize(); ++row) {
-        for (typename Eigen::SparseMatrix<scalar_t, Eigen::RowMajor>::InnerIterator it(
-                 coefficients.matrix, row);
+    for (Eigen::Index row = 0; row < coefficients.outerSize(); ++row) {
+        for (typename Eigen::SparseMatrix<scalar_t, Eigen::RowMajor>::InnerIterator it(coefficients,
+                                                                                       row);
              it; ++it) {
             if (it.row() == it.col() &&
                 std::abs(it.value() - static_cast<scalar_t>(1)) <= numerical_precision) {
@@ -483,50 +477,50 @@ bool Basis<Derived>::is_canonical() const {
             }
         }
     }
-    return num_ones == coefficients.matrix.rows();
+    return num_ones == coefficients.rows();
 }
 
 template <typename Derived>
-std::shared_ptr<const Derived> Basis<Derived>::transformed(const Sorting &transformation) const {
+std::shared_ptr<const Derived> Basis<Derived>::transformed(
+    const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) const {
     // Create a copy of the current object
     auto transformed = std::make_shared<Derived>(derived());
 
-    if (coefficients.matrix.cols() == 0) {
+    if (coefficients.cols() == 0) {
         return transformed;
     }
 
-    // Apply the transformation
+    // Apply the sorting
     set_task_status("Applying basis sorting...");
-    transformed->coefficients.matrix = coefficients.matrix * transformation.matrix;
+    transformed->coefficients = coefficients * sorter;
 
-    transformed->state_index_to_quantum_number_f.resize(transformation.matrix.size());
-    transformed->state_index_to_quantum_number_m.resize(transformation.matrix.size());
-    transformed->state_index_to_parity.resize(transformation.matrix.size());
+    transformed->state_index_to_quantum_number_f.resize(sorter.size());
+    transformed->state_index_to_quantum_number_m.resize(sorter.size());
+    transformed->state_index_to_parity.resize(sorter.size());
 
     set_task_status("Relabeling sorted basis states...");
-    for (int i = 0; i < transformation.matrix.size(); ++i) {
+    for (int i = 0; i < sorter.size(); ++i) {
         transformed->state_index_to_quantum_number_f[i] =
-            state_index_to_quantum_number_f[transformation.matrix.indices()[i]];
+            state_index_to_quantum_number_f[sorter.indices()[i]];
         transformed->state_index_to_quantum_number_m[i] =
-            state_index_to_quantum_number_m[transformation.matrix.indices()[i]];
-        transformed->state_index_to_parity[i] =
-            state_index_to_parity[transformation.matrix.indices()[i]];
+            state_index_to_quantum_number_m[sorter.indices()[i]];
+        transformed->state_index_to_parity[i] = state_index_to_parity[sorter.indices()[i]];
     }
 
     return transformed;
 }
 
 template <typename Derived>
-std::shared_ptr<const Derived>
-Basis<Derived>::transformed(const Transformation<scalar_t> &transformation) const {
-    // TODO why is "numerical_precision = 100 * std::sqrt(coefficients.matrix.rows()) *
+std::shared_ptr<const Derived> Basis<Derived>::transformed(
+    const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation) const {
+    // TODO why is "numerical_precision = 100 * std::sqrt(coefficients.rows()) *
     // std::numeric_limits<real_t>::epsilon()" too small for figuring out whether m is conserved?
     real_t numerical_precision = 0.001;
 
     // Create a copy of the current object
     auto transformed = std::make_shared<Derived>(derived());
 
-    if (coefficients.matrix.cols() == 0) {
+    if (coefficients.cols() == 0) {
         return transformed;
     }
 
@@ -534,9 +528,9 @@ Basis<Derived>::transformed(const Transformation<scalar_t> &transformation) cons
     // If a quantum number turns out to be conserved by the transformation, it will be
     // rounded to the nearest half integer to avoid loss of numerical_precision.
     set_task_status("Applying basis transformation...");
-    transformed->coefficients.matrix = coefficients.matrix * transformation.matrix;
+    transformed->coefficients = coefficients * transformation;
 
-    Eigen::SparseMatrix<real_t> probs = transformation.matrix.cwiseAbs2().transpose();
+    Eigen::SparseMatrix<real_t> probs = transformation.cwiseAbs2().transpose();
 
     set_task_status("Updating transformed quantum numbers...");
     {

@@ -40,16 +40,17 @@ static void declare_basis(nb::module_ &m, std::string const &type_name) {
         .def("get_parity", &Basis<T>::get_parity)
         .def("get_coefficients", &Basis<T>::get_coefficients)
         .def("copy_with_coefficients", &Basis<T>::copy_with_coefficients)
-        .def("get_transformation", &Basis<T>::get_transformation)
         .def("get_sorter", &Basis<T>::get_sorter)
         .def("get_indices_of_blocks", &Basis<T>::get_indices_of_blocks)
         .def("get_sorter_without_checks", &Basis<T>::get_sorter_without_checks)
         .def("get_indices_of_blocks_without_checks",
              &Basis<T>::get_indices_of_blocks_without_checks)
-        .def(
-            "transformed",
-            nb::overload_cast<const Transformation<scalar_t> &>(&Basis<T>::transformed, nb::const_))
-        .def("transformed", nb::overload_cast<const Sorting &>(&Basis<T>::transformed, nb::const_))
+        .def("transformed",
+             nb::overload_cast<const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &>(
+                 &Basis<T>::transformed, nb::const_))
+        .def("transformed",
+             nb::overload_cast<const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &>(
+                 &Basis<T>::transformed, nb::const_))
         .def("canonicalized", &Basis<T>::canonicalized)
         .def("is_canonical", &Basis<T>::is_canonical)
         .def("merge", &Basis<T>::merge);

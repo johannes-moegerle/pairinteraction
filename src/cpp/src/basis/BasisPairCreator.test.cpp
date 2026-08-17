@@ -426,8 +426,8 @@ DOCTEST_TEST_CASE("create a symmetrized BasisPair") {
                                      .restrict_parity_under_permutation(Parity::ODD)
                                      .create();
 
-        auto expected_basis = canonical_basis->transformed(Transformation<double>(
-            build_manual_symmetrizer(canonical_basis, Parity::UNKNOWN, Parity::ODD)));
+        auto expected_basis = canonical_basis->transformed(
+            build_manual_symmetrizer(canonical_basis, Parity::UNKNOWN, Parity::ODD));
 
         check_same_pair_eigenenergies(symmetrized_basis, expected_basis, diagonalizer);
         DOCTEST_CHECK(symmetrized_basis->get_number_of_states() <
@@ -441,8 +441,8 @@ DOCTEST_TEST_CASE("create a symmetrized BasisPair") {
                                      .restrict_parity_under_inversion(Parity::ODD)
                                      .create();
 
-        auto expected_basis = canonical_basis->transformed(Transformation<double>(
-            build_manual_symmetrizer(canonical_basis, Parity::ODD, Parity::UNKNOWN)));
+        auto expected_basis = canonical_basis->transformed(
+            build_manual_symmetrizer(canonical_basis, Parity::ODD, Parity::UNKNOWN));
 
         check_same_pair_eigenenergies(symmetrized_basis, expected_basis, diagonalizer);
         DOCTEST_CHECK(symmetrized_basis->get_number_of_states() <

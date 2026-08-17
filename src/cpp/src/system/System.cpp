@@ -74,17 +74,8 @@ System<Derived>::get_matrix() const {
 }
 
 template <typename Derived>
-const Transformation<typename System<Derived>::scalar_t> &
-System<Derived>::get_transformation() const {
-    if (hamiltonian_requires_construction) {
-        construct_hamiltonian();
-        hamiltonian_requires_construction = false;
-    }
-    return basis->get_transformation();
-}
-
-template <typename Derived>
-Sorting System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
+Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
@@ -95,12 +86,11 @@ Sorting System<Derived>::get_sorter(const std::vector<SorterType> &labels) const
     bool contains_energy = (it != labels.end());
     std::vector<SorterType> after_energy(contains_energy ? it + 1 : labels.end(), labels.end());
 
-    Sorting transformation;
-    transformation.matrix.resize(matrix.rows());
-    transformation.matrix.setIdentity();
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> sorter(matrix.rows());
+    sorter.setIdentity();
 
     if (!before_energy.empty()) {
-        basis->get_sorter_without_checks(before_energy, transformation);
+        basis->get_sorter_without_checks(before_energy, sorter);
     }
 
     if (contains_energy) {
@@ -111,16 +101,15 @@ Sorting System<Derived>::get_sorter(const std::vector<SorterType> &labels) const
         }
 
         std::stable_sort(
-            transformation.matrix.indices().data(),
-            transformation.matrix.indices().data() + transformation.matrix.indices().size(),
+            sorter.indices().data(), sorter.indices().data() + sorter.indices().size(),
             [&](int i, int j) { return energies_of_states[i] < energies_of_states[j]; });
     }
 
     if (!after_energy.empty()) {
-        basis->get_sorter_without_checks(after_energy, transformation);
+        basis->get_sorter_without_checks(after_energy, sorter);
     }
 
-    return transformation;
+    return sorter;
 }
 
 template <typename Derived>
@@ -144,7 +133,8 @@ System<Derived>::get_indices_of_blocks(const std::vector<SorterType> &labels) co
 }
 
 template <typename Derived>
-System<Derived> &System<Derived>::transform(const Transformation<scalar_t> &transformation) {
+System<Derived> &
+System<Derived>::transform(const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation) {
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
@@ -152,7 +142,7 @@ System<Derived> &System<Derived>::transform(const Transformation<scalar_t> &tran
 
     set_task_status("Applying transformation...");
     if (matrix.cols() != 0) {
-        matrix = transformation.matrix.adjoint() * matrix * transformation.matrix;
+        matrix = transformation.adjoint() * matrix * transformation;
         basis = basis->transformed(transformation);
     }
 
@@ -166,7 +156,8 @@ System<Derived> &System<Derived>::transform(const Transformation<scalar_t> &tran
 }
 
 template <typename Derived>
-System<Derived> &System<Derived>::transform(const Sorting &transformation) {
+System<Derived> &
+System<Derived>::transform(const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) {
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
@@ -174,8 +165,8 @@ System<Derived> &System<Derived>::transform(const Sorting &transformation) {
 
     set_task_status("Applying transformation...");
     if (matrix.cols() != 0) {
-        matrix = matrix.twistedBy(transformation.matrix.inverse());
-        basis = basis->transformed(transformation);
+        matrix = matrix.twistedBy(sorter.inverse());
+        basis = basis->transformed(sorter);
     }
 
     return *this;
@@ -206,7 +197,7 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
     // Sort the Hamiltonian according to the block structure
     if (!blockdiagonalizing_labels.empty()) {
         auto sorter = get_sorter(blockdiagonalizing_labels);
-        matrix = matrix.twistedBy(sorter.matrix.inverse());
+        matrix = matrix.twistedBy(sorter.inverse());
         basis = basis->transformed(sorter);
     }
 

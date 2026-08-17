@@ -76,14 +76,15 @@ public:
     Iterator begin() const;
     Iterator end() const;
 
-    const Transformation<scalar_t> &get_transformation() const override;
-    Sorting get_sorter(const std::vector<SorterType> &labels) const override;
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+    get_sorter(const std::vector<SorterType> &labels) const override;
     std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<SorterType> &labels) const override;
 
     void perform_blocks_checks(const std::set<SorterType> &unique_labels) const;
-    void get_sorter_without_checks(const std::vector<SorterType> &labels,
-                                   Sorting &transformation) const;
+    void get_sorter_without_checks(
+        const std::vector<SorterType> &labels,
+        Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) const;
     void get_indices_of_blocks_without_checks(const std::set<SorterType> &unique_labels,
                                               IndicesOfBlocksCreator &blocks) const;
 
@@ -91,8 +92,9 @@ public:
     bool is_canonical() const;
     virtual std::shared_ptr<const Derived> merge(std::shared_ptr<const Derived> other) const = 0;
     std::shared_ptr<const Derived>
-    transformed(const Transformation<scalar_t> &transformation) const;
-    std::shared_ptr<const Derived> transformed(const Sorting &transformation) const;
+    transformed(const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation) const;
+    std::shared_ptr<const Derived>
+    transformed(const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) const;
 
 protected:
     Basis(ketvec_t &&kets);
@@ -101,7 +103,7 @@ protected:
 private:
     const Derived &derived() const;
 
-    Transformation<scalar_t> coefficients;
+    Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> coefficients;
 
     std::vector<real_t> state_index_to_quantum_number_f;
     std::vector<real_t> state_index_to_quantum_number_m;

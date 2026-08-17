@@ -35,22 +35,7 @@ size_t IndicesOfBlocksCreator::size() const {
     return boundaries.empty() ? 0 : boundaries.size() - 1;
 }
 
-template <typename Scalar>
-Transformation<Scalar>::Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix)
-    : matrix(std::move(matrix)) {}
-
-Sorting::Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix)
-    : matrix(std::move(matrix)) {}
-
 // Explicit instantiations
-// NOLINTBEGIN(bugprone-macro-parentheses, cppcoreguidelines-macro-usage)
-#define INSTANTIATE_TRANSFORMATION(SCALAR)                                                         \
-    template struct Transformation<SCALAR>;                                                        \
-    template class TransformationBuilderInterface<SCALAR>;
-// NOLINTEND(bugprone-macro-parentheses, cppcoreguidelines-macro-usage)
-
-INSTANTIATE_TRANSFORMATION(double)
-INSTANTIATE_TRANSFORMATION(std::complex<double>)
-
-#undef INSTANTIATE_TRANSFORMATION
+template class TransformationBuilderInterface<double>;
+template class TransformationBuilderInterface<std::complex<double>>;
 } // namespace pairinteraction

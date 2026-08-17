@@ -39,21 +39,18 @@ static void declare_system(nb::module_ &m, const std::string &type_name) {
         .def("get_eigenbasis", &S::get_eigenbasis, nb::call_guard<nb::gil_scoped_release>())
         .def("get_eigenenergies", &S::get_eigenenergies, nb::call_guard<nb::gil_scoped_release>())
         .def("get_matrix", &S::get_matrix, nb::call_guard<nb::gil_scoped_release>())
-        .def("get_transformation", &S::get_transformation, nb::call_guard<nb::gil_scoped_release>())
         .def("get_sorter", &S::get_sorter, nb::call_guard<nb::gil_scoped_release>())
         .def("get_indices_of_blocks", &S::get_indices_of_blocks,
              nb::call_guard<nb::gil_scoped_release>())
         .def(
             "transform",
-            [](S &self, const Transformation<scalar_t> &transformation) -> T & {
-                return static_cast<T &>(self.transform(transformation));
-            },
+            [](S &self, const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation)
+                -> T & { return static_cast<T &>(self.transform(transformation)); },
             nb::call_guard<nb::gil_scoped_release>())
         .def(
             "transform",
-            [](S &self, const Sorting &sorting) -> T & {
-                return static_cast<T &>(self.transform(sorting));
-            },
+            [](S &self, const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter)
+                -> T & { return static_cast<T &>(self.transform(sorter)); },
             nb::call_guard<nb::gil_scoped_release>())
         .def(
             "diagonalize",

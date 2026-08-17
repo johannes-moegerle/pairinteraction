@@ -37,13 +37,15 @@ public:
 
     const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &get_matrix() const;
 
-    const Transformation<scalar_t> &get_transformation() const override;
-    Sorting get_sorter(const std::vector<SorterType> &labels) const override;
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+    get_sorter(const std::vector<SorterType> &labels) const override;
     std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<SorterType> &labels) const override;
 
-    System<Derived> &transform(const Transformation<scalar_t> &transformation);
-    System<Derived> &transform(const Sorting &transformation);
+    System<Derived> &
+    transform(const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation);
+    System<Derived> &
+    transform(const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter);
 
     System<Derived> &diagonalize(const DiagonalizerInterface<scalar_t> &diagonalizer,
                                  std::optional<real_t> min_eigenenergy = {},

@@ -15,19 +15,6 @@
 namespace pairinteraction {
 enum class SorterType : unsigned char;
 
-template <typename Scalar>
-struct Transformation {
-    Transformation() = default;
-    Transformation(Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix);
-    Eigen::SparseMatrix<Scalar, Eigen::RowMajor> matrix;
-};
-
-struct Sorting {
-    Sorting() = default;
-    Sorting(Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix);
-    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> matrix;
-};
-
 struct IndicesOfBlock {
     IndicesOfBlock(size_t start, size_t end);
     size_t size() const;
@@ -54,14 +41,11 @@ public:
     using real_t = typename traits::NumTraits<Scalar>::real_t;
 
     virtual ~TransformationBuilderInterface() = default;
-    virtual const Transformation<Scalar> &get_transformation() const = 0;
-    virtual Sorting get_sorter(const std::vector<SorterType> &labels) const = 0;
+    virtual Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+    get_sorter(const std::vector<SorterType> &labels) const = 0;
     virtual std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<SorterType> &labels) const = 0;
 };
-
-extern template struct Transformation<double>;
-extern template struct Transformation<std::complex<double>>;
 
 extern template class TransformationBuilderInterface<double>;
 extern template class TransformationBuilderInterface<std::complex<double>>;

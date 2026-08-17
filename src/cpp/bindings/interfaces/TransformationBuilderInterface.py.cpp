@@ -16,15 +16,9 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace pairinteraction;
 
-template <typename T>
-static void declare_transformation(nb::module_ &m, std::string const &type_name) {
-    std::string pyclass_name = "Transformation" + type_name;
-    nb::class_<Transformation<T>> pyclass(m, pyclass_name.c_str());
-    pyclass.def(nb::init<>()).def_rw("matrix", &Transformation<T>::matrix);
-}
-
-static void declare_sorting(nb::module_ &m) {
-    nb::class_<Sorting> pyclass(m, "Sorting");
+static void declare_permutation_matrix(nb::module_ &m) {
+    nb::class_<Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>> pyclass(
+        m, "PermutationMatrix");
     pyclass.def(nb::init<>());
 }
 
@@ -46,9 +40,7 @@ static void declare_transformation_builder_interface(nb::module_ &m, std::string
 }
 
 void bind_transformation_builder_interface(nb::module_ &m) {
-    declare_transformation<double>(m, "Real");
-    declare_transformation<std::complex<double>>(m, "Complex");
-    declare_sorting(m);
+    declare_permutation_matrix(m);
     declare_indices_of_blocks(m);
     declare_indices_of_blocks_creator(m);
     declare_transformation_builder_interface<double>(m, "Real");

@@ -272,8 +272,7 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
     }
 
     // TODO: on the long run, construct the coefficient matrix directly
-    auto transformation = Transformation<Scalar>(std::move(transformation_matrix));
-    return basis->transformed(transformation);
+    return basis->transformed(transformation_matrix);
 }
 
 // Explicit instantiations
