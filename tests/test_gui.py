@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pytest
+from pairinteraction_gui.calculate.calculate_one_atom import ParametersOneAtom
 from pairinteraction_gui.main_window import MainWindow
 
 from .utils import REFERENCE_PATHS, compare_eigensystem_to_reference, no_log_propagation
@@ -109,7 +110,7 @@ def test_main_window_basic(qtbot: QtBot, window_starkmap: MainWindow) -> None:
     basis_qn.items["l"].setValue(1)
     basis_qn.items["m"].setValue(0)
 
-    one_atom_page.calculate_and_abort.getNamedWidget("Calculate").click()
+    one_atom_page.calculate_button.click()
     qtbot.waitUntil(lambda: one_atom_page._calculation_finished, timeout=30_000)  # ci macOS-15-intel is very slow
     qtbot.waitUntil(lambda: one_atom_page._plot_finished, timeout=5_000)
 
@@ -200,6 +201,88 @@ def _test_calculate_page(
     exec(python_code, locals_globals, locals_globals)  # noqa: S102
     energies = np.array(locals_globals["energies_list"]) + ket_energy_0
     compare_eigensystem_to_reference(REFERENCE_PATHS[reference_name], energies)
+
+
+def test_calculate_in_selected_limits(window_starkmap: MainWindow) -> None:
+    """The second calculate button must restrict the settings to the limits shown in the plot."""
+    page: OneAtomPage = window_starkmap.stacked_pages.getNamedWidget("OneAtomPage")  # type: ignore [assignment]
+    assert page.system_config.Ez.values() == (0, 10)
+    assert page.calculation_config.steps.value() == 11
+
+    # without a previous calculation there is nothing to restrict
+    assert not page.apply_plot_limits_to_config()
+
+    page.plotwidget.parameters = ParametersOneAtom.from_page(page)  # as it would be after a calculation
+    page.plotwidget.canvas.ax.set_xlim(2, 4)
+    page.plotwidget.canvas.ax.set_ylim(-1.5, 2.5)
+    assert page.apply_plot_limits_to_config()
+
+    # the displayed energy range is used as diagonalization energy range
+    assert page.calculation_config.energy_range.isChecked()
+    assert page.calculation_config.energy_range.values() == (-1.5, 2.5)
+    # Ez changes along the x axis and is restricted, the constant fields are left alone
+    assert page.system_config.Ez.values() == (2, 4)
+    assert page.system_config.Ex.values() == (0, 0)
+    # all steps are now inside the selected range
+    assert page.calculation_config.steps.value() == 11
+
+    parameters = ParametersOneAtom.from_page(page)
+    assert parameters.get_x_values()[0] == 2
+    assert parameters.get_x_values()[-1] == 4
+    assert parameters.steps == 11
+    assert parameters.diagonalize_relative_energy_range == (-1.5, 2.5)
+
+    window_starkmap.close()
+    plt.close("all")  # make sure to close all matplotlib figures
+
+
+def test_calculate_in_selected_limits_end_to_end(qtbot: QtBot, window_starkmap: MainWindow) -> None:
+    """Clicking "Calculate in selected limits" must recalculate inside the shown limits."""
+    page: OneAtomPage = window_starkmap.stacked_pages.getNamedWidget("OneAtomPage")  # type: ignore [assignment]
+
+    # make the basis smaller for faster test
+    basis_qn = page.basis_config.stacked_basis_list[0].currentWidget()
+    basis_qn.items["n"].setValue(1)
+    basis_qn.items["l"].setValue(1)
+    basis_qn.items["m"].setValue(0)
+
+    def calculate(button: Any) -> None:
+        page._calculation_finished = page._plot_finished = False
+        button.click()
+        qtbot.waitUntil(lambda: page._calculation_finished, timeout=30_000)  # ci macOS-15-intel is very slow
+        qtbot.waitUntil(lambda: page._plot_finished, timeout=5_000)
+
+    calculate(page.calculate_button)
+    assert page.plotwidget.results is not None
+    n_energies_full = len(page.plotwidget.results.energies[0])
+
+    page.plotwidget.canvas.ax.set_xlim(2, 4)
+    page.plotwidget.canvas.ax.set_ylim(-1, 1)
+    calculate(page.calculate_in_limits_button)
+
+    parameters = page.plotwidget.parameters
+    assert parameters is not None
+    assert parameters.get_x_values()[0] == 2
+    assert parameters.get_x_values()[-1] == 4
+    assert parameters.steps == 11
+    assert parameters.diagonalize_relative_energy_range == (-1, 1)
+    assert page.plotwidget.results is not None
+    assert len(page.plotwidget.results.energies[0]) < n_energies_full
+
+    window_starkmap.close()
+    plt.close("all")  # make sure to close all matplotlib figures
+
+
+def test_calculate_in_limits_button_only_where_supported(base_window: MainWindow) -> None:
+    """Only the one and two atoms pages calculate in the selected limits."""
+    for page_name in ["OneAtomPage", "TwoAtomsPage"]:
+        page: OneAtomPage | TwoAtomsPage = base_window.stacked_pages.getNamedWidget(page_name)  # type: ignore [assignment]
+        assert page.supports_calculate_in_limits
+        assert page.calculate_in_limits_button.text() == "Calculate in selected limits"
+
+    lifetimes_page: LifetimesPage = base_window.stacked_pages.getNamedWidget("LifetimesPage")  # type: ignore [assignment]
+    assert not lifetimes_page.supports_calculate_in_limits
+    assert not hasattr(lifetimes_page, "calculate_in_limits_button")
 
 
 @pytest.mark.parametrize("page_name", ["OneAtomPage", "TwoAtomsPage"])

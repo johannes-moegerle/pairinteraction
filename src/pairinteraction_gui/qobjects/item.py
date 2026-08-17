@@ -196,6 +196,7 @@ class RangeItem(WidgetH):
         tooltip_label: str | None = None,
         checkable: bool = True,
         checked: bool = True,
+        decimals: int = 3,
     ) -> None:
         tooltip_label = tooltip_label if tooltip_label is not None else label
 
@@ -211,8 +212,12 @@ class RangeItem(WidgetH):
         self.label = QLabel(label)
         self.label.setMinimumWidth(25)
 
-        self.min_spinbox = DoubleSpinBox(parent, *vrange, vdefaults[0], tooltip=f"Minimum {tooltip_label} in {unit}")
-        self.max_spinbox = DoubleSpinBox(parent, *vrange, vdefaults[1], tooltip=f"Maximum {tooltip_label} in {unit}")
+        self.min_spinbox = DoubleSpinBox(
+            parent, *vrange, vdefaults[0], vstep=0.1, decimals=decimals, tooltip=f"Minimum {tooltip_label} in {unit}"
+        )
+        self.max_spinbox = DoubleSpinBox(
+            parent, *vrange, vdefaults[1], vstep=0.1, decimals=decimals, tooltip=f"Maximum {tooltip_label} in {unit}"
+        )
         self.min_spinbox.setObjectName(f"{label_to_object_name(label)}_min")
         self.max_spinbox.setObjectName(f"{label_to_object_name(label)}_max")
 

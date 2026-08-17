@@ -107,6 +107,12 @@ QPushButton {
     margin-bottom: 5px;
     padding: 3px;
 }
+/* The calculate buttons are stacked inside a container, so they have to be more compact */
+QWidget#CalculateButtons QPushButton {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding: 1px 3px;
+}
 QPushButton:hover {
     background-color: palette(midlight);
 }

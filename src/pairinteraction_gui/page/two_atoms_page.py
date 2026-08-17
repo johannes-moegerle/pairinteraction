@@ -27,6 +27,9 @@ class TwoAtomsPage(CalculationPage):
 
     title = "Two\nAtoms"
     tooltip = "Configure and analyze pair systems"
+    supports_calculate_in_limits = True
+
+    system_config: SystemConfigTwoAtoms
 
     def setupWidget(self) -> None:
         super().setupWidget()

@@ -25,6 +25,9 @@ class OneAtomPage(CalculationPage):
 
     title = "One\nAtom"
     tooltip = "Configure and analyze single-atom systems"
+    supports_calculate_in_limits = True
+
+    system_config: SystemConfigOneAtom
 
     def setupWidget(self) -> None:
         super().setupWidget()

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QStyle,
     QToolBox,
+    QWidget,
 )
 
 import pairinteraction
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from pairinteraction_gui.calculate.calculate_base import Parameters, Results
     from pairinteraction_gui.config.calculation_config import CalculationConfig
     from pairinteraction_gui.config.ket_config import KetConfig
+    from pairinteraction_gui.config.system_config import SystemConfig
     from pairinteraction_gui.plotwidget.plotwidget import PlotWidget
 
 logger = logging.getLogger(__name__)
@@ -96,6 +98,10 @@ class CalculationPage(SimulationPage):
     """Base class for all pages with a calculation button."""
 
     plotwidget: PlotEnergies
+    # the following configs only exist on pages which support calculating in the selected plot limits
+    system_config: SystemConfig
+    calculation_config: CalculationConfig
+    supports_calculate_in_limits = False
     _calculation_finished = False
     _plot_finished = False
 
@@ -111,19 +117,35 @@ class CalculationPage(SimulationPage):
         bottom_layout.setObjectName("bottomLayout")
 
         # Calculate/Abort stacked buttons
-        self.calculate_and_abort = NamedStackedWidget[QPushButton](self)
+        self.calculate_and_abort = NamedStackedWidget[QWidget](self)
 
-        calculate_button = QPushButton("Calculate")
-        calculate_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
-        calculate_button.clicked.connect(self.calculate_clicked)
-        self.calculate_and_abort.addNamedWidget(calculate_button, "Calculate")
+        margin = (0, 1, 0, 1) if self.supports_calculate_in_limits else (0, 5, 0, 5)
+        calculate_widget = WidgetV(self, name="CalculateButtons", margin=margin, spacing=2)
+        self.calculate_button = QPushButton("Calculate")
+        self.calculate_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+        self.calculate_button.setToolTip("Calculate with the current settings")
+        self.calculate_button.clicked.connect(self.calculate_clicked)
+        calculate_widget.layout().addWidget(self.calculate_button)
+
+        if self.supports_calculate_in_limits:
+            self.calculate_in_limits_button = QPushButton("Calculate in selected limits")
+            self.calculate_in_limits_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+            self.calculate_in_limits_button.setToolTip(
+                "Calculate again, but only inside the limits currently shown in the plot:\n"
+                "the eigenenergies are calculated in the displayed energy range and all quantities which\n"
+                "change along the x axis are restricted to the displayed x range, using the same number of steps."
+            )
+            self.calculate_in_limits_button.clicked.connect(self.calculate_in_limits_clicked)
+            calculate_widget.layout().addWidget(self.calculate_in_limits_button)
+
+        self.calculate_and_abort.addNamedWidget(calculate_widget, "Calculate")
 
         abort_button = QPushButton("Abort")
         abort_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop))
         abort_button.clicked.connect(self.abort_clicked)
         self.calculate_and_abort.addNamedWidget(abort_button, "Abort")
 
-        self.calculate_and_abort.setFixedHeight(50)
+        self.calculate_and_abort.setFixedHeight(60 if self.supports_calculate_in_limits else 50)
         bottom_layout.addWidget(self.calculate_and_abort, stretch=2)
 
         # Create export button with menu
@@ -164,6 +186,49 @@ class CalculationPage(SimulationPage):
         worker.signals.finished.connect(self.after_calculate)
         worker.signals.finished.connect(lambda _: setattr(self, "_calculation_finished", True))
         worker.start()
+
+    def calculate_in_limits_clicked(self) -> None:
+        """Restrict the settings to the limits currently shown in the plot and calculate again."""
+        if not self.apply_plot_limits_to_config():
+            return
+        self.calculate_clicked()
+
+    def apply_plot_limits_to_config(self) -> bool:
+        """Restrict the calculation settings to the limits currently shown in the plot.
+
+        The displayed energy range is used as diagonalization energy range and all quantities which change along
+        the x axis are restricted to the displayed x range (the number of steps is left unchanged, i.e. all steps
+        are now inside the selected range).
+
+        Returns whether the limits could be applied.
+        """
+        parameters = self.plotwidget.parameters
+        if parameters is None:
+            show_status_tip(self, "Please calculate first, before calculating in the selected limits.", logger=logger)
+            return False
+
+        x_min, x_max = self.plotwidget.canvas.ax.get_xlim()
+        y_min, y_max = self.plotwidget.canvas.ax.get_ylim()
+
+        # the plotted energies are relative to the energy of interest, just like the diagonalization energy range
+        self.calculation_config.energy_range.setValues(y_min, y_max)
+
+        x_values = parameters.get_x_values()
+        x_start, x_stop = x_values[0], x_values[-1]
+        if x_start == x_stop:
+            return True  # nothing changes along the x axis, so there are no ranges to restrict
+
+        # all quantities which change along the x axis are restricted to the same relative part of their range
+        range_items = self.system_config.get_range_items_dict()
+        for key, values in parameters.ranges.items():
+            if values[0] == values[-1]:
+                continue
+            new_values = [
+                values[0] + (x - x_start) / (x_stop - x_start) * (values[-1] - values[0]) for x in (x_min, x_max)
+            ]
+            range_items[key].setValues(*new_values)
+
+        return True
 
     def before_calculate(self) -> None:
         show_status_tip(self, "Calculating... Please wait.", logger=logger)

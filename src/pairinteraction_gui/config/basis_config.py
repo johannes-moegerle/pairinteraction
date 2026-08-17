@@ -174,6 +174,7 @@ class BasisConfigTwoAtoms(BasisConfig):
             "Total m",
             tooltip_label="pair total angular momentum m",
             checked=False,
+            decimals=1,
         )
         self.layout().addWidget(self.pair_m_range)
 

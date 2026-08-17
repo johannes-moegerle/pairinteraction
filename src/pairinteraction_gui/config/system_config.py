@@ -60,14 +60,17 @@ class SystemConfig(BaseConfig):
     def get_ranges_dict(self) -> dict[RangesKeys, list[float]]:
         """Return the electric and magnetic field ranges."""
         steps = self.page.calculation_config.steps.value()
-        all_ranges = self._get_all_ranges()
         ranges_min_max: dict[str, tuple[float, float]] = {
-            item.label.text(): item.values() for item in all_ranges if item.isChecked()
+            key: item.values() for key, item in self.get_range_items_dict().items() if item.isChecked()
         }
         if len(ranges_min_max) == 0:
             ranges_min_max["Bz"] = (0, 0)
 
         return {key: np.linspace(value[0], value[1], steps).tolist() for key, value in ranges_min_max.items()}  # type: ignore [misc]
+
+    def get_range_items_dict(self) -> dict[RangesKeys, RangeItem]:
+        """Return all range items, keyed like the entries of get_ranges_dict."""
+        return {item.label.text(): item for item in self._get_all_ranges()}  # type: ignore [misc]
 
     def _get_all_ranges(self) -> list[RangeItem]:
         """Return all range items."""
