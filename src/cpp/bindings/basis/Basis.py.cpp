@@ -17,7 +17,6 @@
 #include <nanobind/eigen/sparse.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/complex.h>
-#include <nanobind/stl/set.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
@@ -42,9 +41,6 @@ static void declare_basis(nb::module_ &m, std::string const &type_name) {
         .def("copy_with_coefficients", &Basis<T>::copy_with_coefficients)
         .def("get_sorter", &Basis<T>::get_sorter)
         .def("get_indices_of_blocks", &Basis<T>::get_indices_of_blocks)
-        .def("get_sorter_without_checks", &Basis<T>::get_sorter_without_checks)
-        .def("get_indices_of_blocks_without_checks",
-             &Basis<T>::get_indices_of_blocks_without_checks)
         .def("transformed",
              nb::overload_cast<const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &>(
                  &Basis<T>::transformed, nb::const_))

@@ -14,7 +14,6 @@ using namespace pairinteraction;
 static void declare_permutation_matrix(nb::module_ &m) {
     nb::class_<Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>> pyclass(
         m, "PermutationMatrix");
-    pyclass.def(nb::init<>());
 }
 
 static void declare_indices_of_blocks(nb::module_ &m) {
@@ -24,10 +23,6 @@ static void declare_indices_of_blocks(nb::module_ &m) {
         .def_rw("end", &IndicesOfBlock::end);
 }
 
-static void declare_indices_of_blocks_creator(nb::module_ &m) {
-    nb::class_<IndicesOfBlocksCreator> pyclass(m, "IndicesOfBlocksCreator");
-}
-
 static void declare_sorter_builder_interface(nb::module_ &m) {
     nb::class_<SorterBuilderInterface> pyclass(m, "SorterBuilderInterface");
 }
@@ -35,6 +30,5 @@ static void declare_sorter_builder_interface(nb::module_ &m) {
 void bind_sorter_builder_interface(nb::module_ &m) {
     declare_permutation_matrix(m);
     declare_indices_of_blocks(m);
-    declare_indices_of_blocks_creator(m);
     declare_sorter_builder_interface(m);
 }
