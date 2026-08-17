@@ -12,6 +12,7 @@
 #include "pairinteraction/diagonalize/DiagonalizerLapackeEvr.hpp"
 #include "pairinteraction/diagonalize/diagonalize.hpp"
 #include "pairinteraction/enums/FloatType.hpp"
+#include "pairinteraction/enums/Parity.hpp"
 #include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetAtomCreator.hpp"
@@ -436,6 +437,91 @@ DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
 
     // ... whereas sorting by the energy is supported
     DOCTEST_CHECK_NOTHROW(system.get_sorter({SorterType::SORT_BY_ENERGY}));
+
+    // A repeated label cannot influence the order anymore and must be ignored instead of
+    // terminating the program
+    DOCTEST_CHECK_NOTHROW(
+        system.get_sorter({SorterType::SORT_BY_ENERGY, SorterType::SORT_BY_ENERGY}));
+    DOCTEST_CHECK_NOTHROW(
+        system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M, SorterType::SORT_BY_ENERGY,
+                           SorterType::SORT_BY_ENERGY}));
+}
+
+DOCTEST_TEST_CASE("sort a Hamiltonian by several labels") {
+    auto &database = Database::get_global_instance();
+
+    auto basis = BasisAtomCreator<double>()
+                     .set_species("Rb")
+                     .restrict_quantum_number("n", 60, 60)
+                     .restrict_quantum_number("l", 0, 1)
+                     .create(database);
+
+    // The first label is the primary sorting criterion, the following labels only break ties
+    {
+        auto system = SystemAtom<double>(basis);
+        system.set_electric_field({0, 0, 0.0001});
+        system.transform(
+            system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M, SorterType::SORT_BY_ENERGY}));
+
+        // Sorting by m first means that states of equal m are contiguous ...
+        auto blocks = system.get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_M});
+        DOCTEST_CHECK(blocks.size() > 1);
+
+        // ... and that within each block, the energies are ascending
+        const auto &matrix = system.get_matrix();
+        for (const auto &block : blocks) {
+            for (auto i = static_cast<long>(block.start) + 1; i < static_cast<long>(block.end);
+                 ++i) {
+                DOCTEST_CHECK(matrix.coeff(i - 1, i - 1) <= matrix.coeff(i, i));
+            }
+        }
+    }
+
+    // If the energy is the first label, the states are sorted by the energy globally
+    {
+        auto system = SystemAtom<double>(basis);
+        system.set_electric_field({0, 0, 0.0001});
+        system.transform(
+            system.get_sorter({SorterType::SORT_BY_ENERGY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+
+        const auto &matrix = system.get_matrix();
+        for (long i = 1; i < matrix.rows(); ++i) {
+            DOCTEST_CHECK(matrix.coeff(i - 1, i - 1) <= matrix.coeff(i, i));
+        }
+    }
+
+    // Sorting by the parity and the quantum number m makes the parity the primary criterion
+    {
+        auto system = SystemAtom<double>(basis);
+        system.set_electric_field({0, 0, 0.0001});
+        system.transform(
+            system.get_sorter({SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+
+        auto sorted_basis = system.get_basis();
+        size_t num_states = sorted_basis->get_number_of_states();
+
+        // The parity is the primary criterion, thus it is ascending globally ...
+        for (size_t i = 1; i < num_states; ++i) {
+            DOCTEST_CHECK(sorted_basis->get_parity(i - 1) <= sorted_basis->get_parity(i));
+        }
+
+        // ... whereas the quantum number m is only ascending within a block of equal parity
+        for (size_t i = 1; i < num_states; ++i) {
+            if (sorted_basis->get_parity(i - 1) == sorted_basis->get_parity(i)) {
+                DOCTEST_CHECK(sorted_basis->get_quantum_number_m(i - 1) <=
+                              sorted_basis->get_quantum_number_m(i));
+            }
+        }
+
+        // If m was the primary criterion, m would be ascending globally instead
+        bool m_ascending_globally = true;
+        for (size_t i = 1; i < num_states; ++i) {
+            if (sorted_basis->get_quantum_number_m(i - 1) > sorted_basis->get_quantum_number_m(i)) {
+                m_ascending_globally = false;
+            }
+        }
+        DOCTEST_CHECK_FALSE(m_ascending_globally);
+    }
 }
 
 } // namespace pairinteraction

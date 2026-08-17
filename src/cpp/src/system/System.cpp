@@ -76,21 +76,32 @@ System<Derived>::get_matrix() const {
 template <typename Derived>
 Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
 System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
+    // The first sorter type in labels is supposed to be the primary sorting criterion.
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
     }
 
-    auto it = std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY);
-    std::vector<SorterType> before_energy(labels.begin(), it);
-    bool contains_energy = (it != labels.end());
-    std::vector<SorterType> after_energy(contains_energy ? it + 1 : labels.end(), labels.end());
+    // Drop repeated sorter types. This also ensures that energy occurs at most once.
+    std::vector<SorterType> unique_labels;
+    unique_labels.reserve(labels.size());
+    for (const auto &label : labels) {
+        if (std::find(unique_labels.begin(), unique_labels.end(), label) == unique_labels.end()) {
+            unique_labels.push_back(label);
+        }
+    }
+
+    auto it = std::find(unique_labels.begin(), unique_labels.end(), SorterType::SORT_BY_ENERGY);
+    std::vector<SorterType> before_energy(unique_labels.begin(), it);
+    bool contains_energy = (it != unique_labels.end());
+    std::vector<SorterType> after_energy(contains_energy ? it + 1 : unique_labels.end(),
+                                         unique_labels.end());
 
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> sorter(matrix.rows());
     sorter.setIdentity();
 
-    if (!before_energy.empty()) {
-        basis->get_sorter_without_checks(before_energy, sorter);
+    if (!after_energy.empty()) {
+        basis->get_sorter_without_checks(after_energy, sorter);
     }
 
     if (contains_energy) {
@@ -105,8 +116,8 @@ System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
             [&](int i, int j) { return energies_of_states[i] < energies_of_states[j]; });
     }
 
-    if (!after_energy.empty()) {
-        basis->get_sorter_without_checks(after_energy, sorter);
+    if (!before_energy.empty()) {
+        basis->get_sorter_without_checks(before_energy, sorter);
     }
 
     return sorter;

@@ -28,8 +28,7 @@ template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_labels) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
-    // Blocks of states of equal energy would only be blocks of an already diagonal Hamiltonian,
-    // which does not need to be diagonalized block by block anymore.
+    // Currently, since states in a basis dont store the energy, they cannot be sorted by energy.
     if (unique_labels.contains(SorterType::SORT_BY_ENERGY)) {
         throw std::invalid_argument("Blocks cannot be obtained by the energy. Note that sorting "
                                     "a system by the energy is supported nevertheless.");
@@ -279,11 +278,7 @@ size_t Basis<Derived>::get_number_of_kets() const {
 template <typename Derived>
 Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
 Basis<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
-    // Throw a meaningful error if sorting by energy is requested as this might be a common mistake
-    if (std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY) != labels.end()) {
-        throw std::invalid_argument("States do not store the energy and thus can not be sorted by "
-                                    "the energy. Use an energy operator instead.");
-    }
+    // Note that sorting by the energy is rejected by get_sorter_without_checks
 
     // Initialize the sorter
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> sorter(coefficients.cols());
@@ -313,6 +308,15 @@ void Basis<Derived>::get_sorter_without_checks(
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &sorter) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
+    // Currently, since states in a basis dont store the energy, they cannot be sorted by energy.
+    // Checking this upfront also guarantees that the switch statements below only encounter labels
+    // they can handle.
+    if (std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY) != labels.end()) {
+        throw std::invalid_argument(
+            "States in a basis do not store the energy and thus can not be sorted by it. "
+            "Note that sorting a system by the energy is supported nevertheless.");
+    }
+
     int *perm_begin = sorter.indices().data();
     int *perm_end = perm_begin + coefficients.cols();
     const int *perm_back = perm_end - 1;
@@ -340,7 +344,7 @@ void Basis<Derived>::get_sorter_without_checks(
                 }
                 break;
             default:
-                std::abort(); // Can't happen because of previous checks
+                std::abort(); // Can't happen because the energy label is rejected above
             }
         }
         return false; // Elements are equal
@@ -368,7 +372,7 @@ void Basis<Derived>::get_sorter_without_checks(
             }
             break;
         default:
-            std::abort(); // Can't happen because of previous checks
+            std::abort(); // Can't happen because the energy label is rejected above
         }
     }
 }
