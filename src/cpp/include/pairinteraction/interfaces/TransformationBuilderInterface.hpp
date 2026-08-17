@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace pairinteraction {
-enum class TransformationType : unsigned char;
+enum class SorterType : unsigned char;
 
 template <typename Scalar>
 struct Transformation {
@@ -55,9 +55,9 @@ public:
 
     virtual ~TransformationBuilderInterface() = default;
     virtual const Transformation<Scalar> &get_transformation() const = 0;
-    virtual Sorting get_sorter(const std::vector<TransformationType> &labels) const = 0;
+    virtual Sorting get_sorter(const std::vector<SorterType> &labels) const = 0;
     virtual std::vector<IndicesOfBlock>
-    get_indices_of_blocks(const std::vector<TransformationType> &labels) const = 0;
+    get_indices_of_blocks(const std::vector<SorterType> &labels) const = 0;
 };
 
 extern template struct Transformation<double>;

@@ -4,7 +4,7 @@
 #pragma once
 
 namespace pairinteraction {
-enum class TransformationType : unsigned char {
+enum class SorterType : unsigned char {
     SORT_BY_QUANTUM_NUMBER_F,
     SORT_BY_QUANTUM_NUMBER_M,
     SORT_BY_PARITY,

@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace pairinteraction {
-enum class TransformationType : unsigned char;
+enum class SorterType : unsigned char;
 
 template <typename Scalar>
 class DiagonalizerInterface;
@@ -38,9 +38,9 @@ public:
     const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &get_matrix() const;
 
     const Transformation<scalar_t> &get_transformation() const override;
-    Sorting get_sorter(const std::vector<TransformationType> &labels) const override;
+    Sorting get_sorter(const std::vector<SorterType> &labels) const override;
     std::vector<IndicesOfBlock>
-    get_indices_of_blocks(const std::vector<TransformationType> &labels) const override;
+    get_indices_of_blocks(const std::vector<SorterType> &labels) const override;
 
     System<Derived> &transform(const Transformation<scalar_t> &transformation);
     System<Derived> &transform(const Sorting &transformation);
@@ -57,7 +57,7 @@ protected:
     mutable Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> matrix;
     mutable bool hamiltonian_requires_construction{true};
     mutable bool hamiltonian_is_diagonal{false};
-    mutable std::vector<TransformationType> blockdiagonalizing_labels;
+    mutable std::vector<SorterType> blockdiagonalizing_labels;
 
     virtual void construct_hamiltonian() const = 0;
 };

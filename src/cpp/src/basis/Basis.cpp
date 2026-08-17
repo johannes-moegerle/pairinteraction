@@ -6,7 +6,7 @@
 #include "pairinteraction/basis/BasisAtom.hpp"
 #include "pairinteraction/basis/BasisPair.hpp"
 #include "pairinteraction/enums/Parity.hpp"
-#include "pairinteraction/enums/TransformationType.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetPair.hpp"
 #include "pairinteraction/utils/TaskControl.hpp"
@@ -25,21 +25,20 @@ template <typename Scalar>
 class BasisAtom;
 
 template <typename Derived>
-void Basis<Derived>::perform_blocks_checks(
-    const std::set<TransformationType> &unique_labels) const {
+void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_labels) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
     // Blocks of states of equal energy would only be blocks of an already diagonal Hamiltonian,
     // which does not need to be diagonalized block by block anymore.
-    if (unique_labels.contains(TransformationType::SORT_BY_ENERGY)) {
+    if (unique_labels.contains(SorterType::SORT_BY_ENERGY)) {
         throw std::invalid_argument("Blocks cannot be obtained by the energy. Note that sorting "
                                     "a system by the energy is supported nevertheless.");
     }
 
     // Check if the states are labeled by the requested labels
-    const bool by_f = unique_labels.contains(TransformationType::SORT_BY_QUANTUM_NUMBER_F);
-    const bool by_m = unique_labels.contains(TransformationType::SORT_BY_QUANTUM_NUMBER_M);
-    const bool by_parity = unique_labels.contains(TransformationType::SORT_BY_PARITY);
+    const bool by_f = unique_labels.contains(SorterType::SORT_BY_QUANTUM_NUMBER_F);
+    const bool by_m = unique_labels.contains(SorterType::SORT_BY_QUANTUM_NUMBER_M);
+    const bool by_parity = unique_labels.contains(SorterType::SORT_BY_PARITY);
 
     if (by_f && !_has_quantum_number_f) {
         throw std::invalid_argument(
@@ -284,10 +283,9 @@ Basis<Derived>::get_transformation() const {
 }
 
 template <typename Derived>
-Sorting Basis<Derived>::get_sorter(const std::vector<TransformationType> &labels) const {
+Sorting Basis<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
     // Throw a meaningful error if sorting by energy is requested as this might be a common mistake
-    if (std::find(labels.begin(), labels.end(), TransformationType::SORT_BY_ENERGY) !=
-        labels.end()) {
+    if (std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY) != labels.end()) {
         throw std::invalid_argument("States do not store the energy and thus can not be sorted by "
                                     "the energy. Use an energy operator instead.");
     }
@@ -305,8 +303,8 @@ Sorting Basis<Derived>::get_sorter(const std::vector<TransformationType> &labels
 
 template <typename Derived>
 std::vector<IndicesOfBlock>
-Basis<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &labels) const {
-    std::set<TransformationType> unique_labels(labels.begin(), labels.end());
+Basis<Derived>::get_indices_of_blocks(const std::vector<SorterType> &labels) const {
+    std::set<SorterType> unique_labels(labels.begin(), labels.end());
     perform_blocks_checks(unique_labels);
 
     // Get the blocks
@@ -317,7 +315,7 @@ Basis<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &lab
 }
 
 template <typename Derived>
-void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationType> &labels,
+void Basis<Derived>::get_sorter_without_checks(const std::vector<SorterType> &labels,
                                                Sorting &transformation) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
@@ -330,18 +328,18 @@ void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationT
     std::stable_sort(perm_begin, perm_end, [&](int a, int b) {
         for (const auto &label : labels) {
             switch (label) {
-            case TransformationType::SORT_BY_PARITY:
+            case SorterType::SORT_BY_PARITY:
                 if (state_index_to_parity[a] != state_index_to_parity[b]) {
                     return state_index_to_parity[a] < state_index_to_parity[b];
                 }
                 break;
-            case TransformationType::SORT_BY_QUANTUM_NUMBER_M:
+            case SorterType::SORT_BY_QUANTUM_NUMBER_M:
                 if (std::abs(state_index_to_quantum_number_m[a] -
                              state_index_to_quantum_number_m[b]) > numerical_precision) {
                     return state_index_to_quantum_number_m[a] < state_index_to_quantum_number_m[b];
                 }
                 break;
-            case TransformationType::SORT_BY_QUANTUM_NUMBER_F:
+            case SorterType::SORT_BY_QUANTUM_NUMBER_F:
                 if (std::abs(state_index_to_quantum_number_f[a] -
                              state_index_to_quantum_number_f[b]) > numerical_precision) {
                     return state_index_to_quantum_number_f[a] < state_index_to_quantum_number_f[b];
@@ -357,19 +355,19 @@ void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationT
     // Check for invalid values
     for (const auto &label : labels) {
         switch (label) {
-        case TransformationType::SORT_BY_PARITY:
+        case SorterType::SORT_BY_PARITY:
             if (state_index_to_parity[*perm_back] == Parity::UNKNOWN) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the parity.");
             }
             break;
-        case TransformationType::SORT_BY_QUANTUM_NUMBER_M:
+        case SorterType::SORT_BY_QUANTUM_NUMBER_M:
             if (state_index_to_quantum_number_m[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number m.");
             }
             break;
-        case TransformationType::SORT_BY_QUANTUM_NUMBER_F:
+        case SorterType::SORT_BY_QUANTUM_NUMBER_F:
             if (state_index_to_quantum_number_f[*perm_back] == std::numeric_limits<real_t>::max()) {
                 throw std::invalid_argument(
                     "States cannot be labeled and thus not sorted by the quantum number f.");
@@ -383,8 +381,7 @@ void Basis<Derived>::get_sorter_without_checks(const std::vector<TransformationT
 
 template <typename Derived>
 void Basis<Derived>::get_indices_of_blocks_without_checks(
-    const std::set<TransformationType> &unique_labels,
-    IndicesOfBlocksCreator &blocks_creator) const {
+    const std::set<SorterType> &unique_labels, IndicesOfBlocksCreator &blocks_creator) const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
     auto last_quantum_number_f = state_index_to_quantum_number_f[0];
@@ -394,20 +391,19 @@ void Basis<Derived>::get_indices_of_blocks_without_checks(
     set_task_status("Identifying basis blocks...");
     for (int i = 0; i < coefficients.matrix.cols(); ++i) {
         for (auto label : unique_labels) {
-            if (label == TransformationType::SORT_BY_QUANTUM_NUMBER_F &&
+            if (label == SorterType::SORT_BY_QUANTUM_NUMBER_F &&
                 std::abs(state_index_to_quantum_number_f[i] - last_quantum_number_f) >
                     numerical_precision) {
                 blocks_creator.add(i);
                 break;
             }
-            if (label == TransformationType::SORT_BY_QUANTUM_NUMBER_M &&
+            if (label == SorterType::SORT_BY_QUANTUM_NUMBER_M &&
                 std::abs(state_index_to_quantum_number_m[i] - last_quantum_number_m) >
                     numerical_precision) {
                 blocks_creator.add(i);
                 break;
             }
-            if (label == TransformationType::SORT_BY_PARITY &&
-                state_index_to_parity[i] != last_parity) {
+            if (label == SorterType::SORT_BY_PARITY && state_index_to_parity[i] != last_parity) {
                 blocks_creator.add(i);
                 break;
             }

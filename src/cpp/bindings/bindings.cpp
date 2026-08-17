@@ -8,7 +8,7 @@
 #include "./enums/FloatType.py.hpp"
 #include "./enums/OperatorType.py.hpp"
 #include "./enums/Parity.py.hpp"
-#include "./enums/TransformationType.py.hpp"
+#include "./enums/SorterType.py.hpp"
 #include "./interfaces/DiagonalizerInterface.py.hpp"
 #include "./interfaces/TransformationBuilderInterface.py.hpp"
 #include "./ket/Ket.py.hpp"
@@ -49,7 +49,7 @@ NB_MODULE(_backend, m) // NOLINT
     // enums
     bind_operator_type(m);
     bind_parity(m);
-    bind_transformation_type(m);
+    bind_sorter_type(m);
     bind_float_type(m);
 
     // interfaces

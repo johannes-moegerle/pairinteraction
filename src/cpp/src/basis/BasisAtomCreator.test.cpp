@@ -8,7 +8,7 @@
 #include "pairinteraction/diagonalize/DiagonalizerEigen.hpp"
 #include "pairinteraction/enums/OperatorType.hpp"
 #include "pairinteraction/enums/Parity.hpp"
-#include "pairinteraction/enums/TransformationType.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetAtomCreator.hpp"
 #include "pairinteraction/system/SystemAtom.hpp"
@@ -68,7 +68,7 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
 
     // Sort the basis by parity and the m quantum number
     auto sorter = basis_unsorted->get_sorter(
-        {TransformationType::SORT_BY_PARITY, TransformationType::SORT_BY_QUANTUM_NUMBER_M});
+        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M});
     auto basis = basis_unsorted->transformed(sorter);
 
     // Check if the basis is properly sorted
@@ -88,7 +88,7 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
 
     // Check that the blocks are correctly determined
     auto blocks = basis->get_indices_of_blocks(
-        {TransformationType::SORT_BY_PARITY, TransformationType::SORT_BY_QUANTUM_NUMBER_M});
+        {SorterType::SORT_BY_PARITY, SorterType::SORT_BY_QUANTUM_NUMBER_M});
     std::vector<size_t> expected_start = {0, 4, 8, 11};
 
     DOCTEST_CHECK(blocks.size() == expected_start.size());

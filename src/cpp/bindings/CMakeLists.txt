@@ -25,8 +25,8 @@ nanobind_add_module(
   enums/OperatorType.py.cpp
   enums/Parity.py.hpp
   enums/Parity.py.cpp
-  enums/TransformationType.py.hpp
-  enums/TransformationType.py.cpp
+  enums/SorterType.py.hpp
+  enums/SorterType.py.cpp
   interfaces/DiagonalizerInterface.py.hpp
   interfaces/DiagonalizerInterface.py.cpp
   interfaces/TransformationBuilderInterface.py.hpp

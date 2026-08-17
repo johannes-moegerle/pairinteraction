@@ -12,7 +12,7 @@
 #include "pairinteraction/diagonalize/DiagonalizerLapackeEvr.hpp"
 #include "pairinteraction/diagonalize/diagonalize.hpp"
 #include "pairinteraction/enums/FloatType.hpp"
-#include "pairinteraction/enums/TransformationType.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetAtomCreator.hpp"
 
@@ -417,8 +417,8 @@ DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
 
     // The electric field conserves the quantum number m, thus the Hamiltonian can be
     // block-diagonalized by m
-    system.transform(system.get_sorter({TransformationType::SORT_BY_QUANTUM_NUMBER_M}));
-    auto blocks = system.get_indices_of_blocks({TransformationType::SORT_BY_QUANTUM_NUMBER_M});
+    system.transform(system.get_sorter({SorterType::SORT_BY_QUANTUM_NUMBER_M}));
+    auto blocks = system.get_indices_of_blocks({SorterType::SORT_BY_QUANTUM_NUMBER_M});
     DOCTEST_CHECK(blocks.size() > 1);
 
     size_t expected_start = 0;
@@ -431,11 +431,11 @@ DOCTEST_TEST_CASE("obtain the blocks of a Hamiltonian") {
 
     // Blocks are obtained to diagonalize the Hamiltonian block by block. Because energy blocks
     // would require an already diagonal Hamiltonian, they cannot be obtained ...
-    DOCTEST_CHECK_THROWS_AS(system.get_indices_of_blocks({TransformationType::SORT_BY_ENERGY}),
+    DOCTEST_CHECK_THROWS_AS(system.get_indices_of_blocks({SorterType::SORT_BY_ENERGY}),
                             std::invalid_argument);
 
     // ... whereas sorting by the energy is supported
-    DOCTEST_CHECK_NOTHROW(system.get_sorter({TransformationType::SORT_BY_ENERGY}));
+    DOCTEST_CHECK_NOTHROW(system.get_sorter({SorterType::SORT_BY_ENERGY}));
 }
 
 } // namespace pairinteraction

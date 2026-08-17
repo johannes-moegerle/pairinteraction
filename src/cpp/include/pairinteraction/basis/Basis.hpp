@@ -16,7 +16,7 @@
 
 namespace pairinteraction {
 enum class Parity : int;
-enum class TransformationType : unsigned char;
+enum class SorterType : unsigned char;
 
 /**
  * @class Basis
@@ -77,14 +77,14 @@ public:
     Iterator end() const;
 
     const Transformation<scalar_t> &get_transformation() const override;
-    Sorting get_sorter(const std::vector<TransformationType> &labels) const override;
+    Sorting get_sorter(const std::vector<SorterType> &labels) const override;
     std::vector<IndicesOfBlock>
-    get_indices_of_blocks(const std::vector<TransformationType> &labels) const override;
+    get_indices_of_blocks(const std::vector<SorterType> &labels) const override;
 
-    void perform_blocks_checks(const std::set<TransformationType> &unique_labels) const;
-    void get_sorter_without_checks(const std::vector<TransformationType> &labels,
+    void perform_blocks_checks(const std::set<SorterType> &unique_labels) const;
+    void get_sorter_without_checks(const std::vector<SorterType> &labels,
                                    Sorting &transformation) const;
-    void get_indices_of_blocks_without_checks(const std::set<TransformationType> &unique_labels,
+    void get_indices_of_blocks_without_checks(const std::set<SorterType> &unique_labels,
                                               IndicesOfBlocksCreator &blocks) const;
 
     std::shared_ptr<const Derived> canonicalized() const;

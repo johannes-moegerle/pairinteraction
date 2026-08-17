@@ -5,7 +5,7 @@
 
 #include "pairinteraction/basis/BasisAtom.hpp"
 #include "pairinteraction/basis/BasisPair.hpp"
-#include "pairinteraction/enums/TransformationType.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/interfaces/DiagonalizerInterface.hpp"
 #include "pairinteraction/system/SystemAtom.hpp"
 #include "pairinteraction/system/SystemPair.hpp"
@@ -84,17 +84,16 @@ System<Derived>::get_transformation() const {
 }
 
 template <typename Derived>
-Sorting System<Derived>::get_sorter(const std::vector<TransformationType> &labels) const {
+Sorting System<Derived>::get_sorter(const std::vector<SorterType> &labels) const {
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
     }
 
-    auto it = std::find(labels.begin(), labels.end(), TransformationType::SORT_BY_ENERGY);
-    std::vector<TransformationType> before_energy(labels.begin(), it);
+    auto it = std::find(labels.begin(), labels.end(), SorterType::SORT_BY_ENERGY);
+    std::vector<SorterType> before_energy(labels.begin(), it);
     bool contains_energy = (it != labels.end());
-    std::vector<TransformationType> after_energy(contains_energy ? it + 1 : labels.end(),
-                                                 labels.end());
+    std::vector<SorterType> after_energy(contains_energy ? it + 1 : labels.end(), labels.end());
 
     Sorting transformation;
     transformation.matrix.resize(matrix.rows());
@@ -126,13 +125,13 @@ Sorting System<Derived>::get_sorter(const std::vector<TransformationType> &label
 
 template <typename Derived>
 std::vector<IndicesOfBlock>
-System<Derived>::get_indices_of_blocks(const std::vector<TransformationType> &labels) const {
+System<Derived>::get_indices_of_blocks(const std::vector<SorterType> &labels) const {
     if (hamiltonian_requires_construction) {
         construct_hamiltonian();
         hamiltonian_requires_construction = false;
     }
 
-    std::set<TransformationType> unique_labels(labels.begin(), labels.end());
+    std::set<SorterType> unique_labels(labels.begin(), labels.end());
     basis->perform_blocks_checks(unique_labels);
 
     IndicesOfBlocksCreator blocks_creator({0, static_cast<size_t>(matrix.rows())});
@@ -196,7 +195,7 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
 
     if (this->is_diagonal()) {
         if (sort_by_energy && !this->is_diagonal_and_sorted_by_energy()) {
-            transform(get_sorter({TransformationType::SORT_BY_ENERGY}));
+            transform(get_sorter({SorterType::SORT_BY_ENERGY}));
         }
         return *this;
     }
@@ -327,7 +326,7 @@ System<Derived> &System<Derived>::diagonalize(const DiagonalizerInterface<scalar
 
     hamiltonian_is_diagonal = true;
     if (sort_by_energy) {
-        transform(get_sorter({TransformationType::SORT_BY_ENERGY}));
+        transform(get_sorter({SorterType::SORT_BY_ENERGY}));
     }
 
     return *this;

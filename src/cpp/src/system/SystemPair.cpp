@@ -8,7 +8,7 @@
 #include "pairinteraction/database/Database.hpp"
 #include "pairinteraction/enums/OperatorType.hpp"
 #include "pairinteraction/enums/Parity.hpp"
-#include "pairinteraction/enums/TransformationType.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetPair.hpp"
 #include "pairinteraction/system/GreenTensorInterpolator.hpp"
@@ -327,13 +327,13 @@ void SystemPair<Scalar>::construct_hamiltonian() const {
     // Store which labels can be used to block-diagonalize the Hamiltonian
     this->blockdiagonalizing_labels.clear();
     if (sort_by_quantum_number_f) {
-        this->blockdiagonalizing_labels.push_back(TransformationType::SORT_BY_QUANTUM_NUMBER_F);
+        this->blockdiagonalizing_labels.push_back(SorterType::SORT_BY_QUANTUM_NUMBER_F);
     }
     if (sort_by_quantum_number_m) {
-        this->blockdiagonalizing_labels.push_back(TransformationType::SORT_BY_QUANTUM_NUMBER_M);
+        this->blockdiagonalizing_labels.push_back(SorterType::SORT_BY_QUANTUM_NUMBER_M);
     }
     if (sort_by_parity) {
-        this->blockdiagonalizing_labels.push_back(TransformationType::SORT_BY_PARITY);
+        this->blockdiagonalizing_labels.push_back(SorterType::SORT_BY_PARITY);
     }
 }
 

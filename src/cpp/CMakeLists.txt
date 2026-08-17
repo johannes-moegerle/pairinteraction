@@ -22,7 +22,7 @@ add_library(
   ./include/pairinteraction/enums/FloatType.hpp
   ./include/pairinteraction/enums/OperatorType.hpp
   ./include/pairinteraction/enums/Parity.hpp
-  ./include/pairinteraction/enums/TransformationType.hpp
+  ./include/pairinteraction/enums/SorterType.hpp
   ./include/pairinteraction/interfaces/DiagonalizerInterface.hpp
   ./include/pairinteraction/interfaces/TransformationBuilderInterface.hpp
   ./include/pairinteraction/ket/Ket.hpp
