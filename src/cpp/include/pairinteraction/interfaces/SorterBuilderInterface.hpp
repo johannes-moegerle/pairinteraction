@@ -34,19 +34,19 @@ private:
 };
 
 template <typename Scalar>
-class TransformationBuilderInterface {
+class SorterBuilderInterface {
 public:
     static_assert(traits::NumTraits<Scalar>::from_floating_point_v);
 
     using real_t = typename traits::NumTraits<Scalar>::real_t;
 
-    virtual ~TransformationBuilderInterface() = default;
+    virtual ~SorterBuilderInterface() = default;
     virtual Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
     get_sorter(const std::vector<SorterType> &labels) const = 0;
     virtual std::vector<IndicesOfBlock>
     get_indices_of_blocks(const std::vector<SorterType> &labels) const = 0;
 };
 
-extern template class TransformationBuilderInterface<double>;
-extern template class TransformationBuilderInterface<std::complex<double>>;
+extern template class SorterBuilderInterface<double>;
+extern template class SorterBuilderInterface<std::complex<double>>;
 } // namespace pairinteraction

@@ -5,4 +5,4 @@
 
 #include <nanobind/nanobind.h>
 
-void bind_transformation_builder_interface(nanobind::module_ &m);
+void bind_sorter_builder_interface(nanobind::module_ &m);

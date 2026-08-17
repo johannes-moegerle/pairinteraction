@@ -29,8 +29,8 @@ nanobind_add_module(
   enums/SorterType.py.cpp
   interfaces/DiagonalizerInterface.py.hpp
   interfaces/DiagonalizerInterface.py.cpp
-  interfaces/TransformationBuilderInterface.py.hpp
-  interfaces/TransformationBuilderInterface.py.cpp
+  interfaces/SorterBuilderInterface.py.hpp
+  interfaces/SorterBuilderInterface.py.cpp
   ket/Ket.py.hpp
   ket/Ket.py.cpp
   system/System.py.hpp

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "pairinteraction/interfaces/TransformationBuilderInterface.hpp"
+#include "pairinteraction/interfaces/SorterBuilderInterface.hpp"
 #include "pairinteraction/utils/eigen_assertion.hpp"
 #include "pairinteraction/utils/eigen_compat.hpp"
 #include "pairinteraction/utils/traits.hpp"
@@ -35,8 +35,7 @@ enum class SorterType : unsigned char;
  */
 
 template <typename Derived>
-class Basis
-    : public TransformationBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
+class Basis : public SorterBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
 public:
     using scalar_t = typename traits::CrtpTraits<Derived>::scalar_t;
     using real_t = typename traits::CrtpTraits<Derived>::real_t;

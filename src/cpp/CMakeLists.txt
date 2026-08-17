@@ -24,7 +24,7 @@ add_library(
   ./include/pairinteraction/enums/Parity.hpp
   ./include/pairinteraction/enums/SorterType.hpp
   ./include/pairinteraction/interfaces/DiagonalizerInterface.hpp
-  ./include/pairinteraction/interfaces/TransformationBuilderInterface.hpp
+  ./include/pairinteraction/interfaces/SorterBuilderInterface.hpp
   ./include/pairinteraction/ket/Ket.hpp
   ./include/pairinteraction/ket/KetAtom.hpp
   ./include/pairinteraction/ket/KetAtomCreator.hpp
@@ -73,7 +73,7 @@ add_library(
   ./src/diagonalize/DiagonalizerLapackeEvr.cpp
   ./src/enums/Parity.test.cpp
   ./src/interfaces/DiagonalizerInterface.cpp
-  ./src/interfaces/TransformationBuilderInterface.cpp
+  ./src/interfaces/SorterBuilderInterface.cpp
   ./src/ket/Ket.cpp
   ./src/ket/KetAtom.cpp
   ./src/ket/KetAtomCreator.cpp

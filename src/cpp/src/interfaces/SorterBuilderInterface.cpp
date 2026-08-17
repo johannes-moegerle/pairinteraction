@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 PairInteraction Developers
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "pairinteraction/interfaces/TransformationBuilderInterface.hpp"
+#include "pairinteraction/interfaces/SorterBuilderInterface.hpp"
 
 namespace pairinteraction {
 
@@ -36,6 +36,6 @@ size_t IndicesOfBlocksCreator::size() const {
 }
 
 // Explicit instantiations
-template class TransformationBuilderInterface<double>;
-template class TransformationBuilderInterface<std::complex<double>>;
+template class SorterBuilderInterface<double>;
+template class SorterBuilderInterface<std::complex<double>>;
 } // namespace pairinteraction

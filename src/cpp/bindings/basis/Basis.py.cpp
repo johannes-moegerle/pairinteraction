@@ -9,7 +9,7 @@
 #include "pairinteraction/basis/BasisPair.hpp"
 #include "pairinteraction/basis/BasisPairCreator.hpp"
 #include "pairinteraction/database/Database.hpp"
-#include "pairinteraction/interfaces/TransformationBuilderInterface.hpp"
+#include "pairinteraction/interfaces/SorterBuilderInterface.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetPair.hpp"
 #include "pairinteraction/system/SystemAtom.hpp"
@@ -29,7 +29,7 @@ template <typename T>
 static void declare_basis(nb::module_ &m, std::string const &type_name) {
     std::string pyclass_name = "Basis" + type_name;
     using scalar_t = typename Basis<T>::scalar_t;
-    nb::class_<Basis<T>, TransformationBuilderInterface<scalar_t>> pyclass(m, pyclass_name.c_str());
+    nb::class_<Basis<T>, SorterBuilderInterface<scalar_t>> pyclass(m, pyclass_name.c_str());
     pyclass.def("get_kets", &Basis<T>::get_kets)
         .def("get_ket", &Basis<T>::get_ket)
         .def("get_state", &Basis<T>::get_state)

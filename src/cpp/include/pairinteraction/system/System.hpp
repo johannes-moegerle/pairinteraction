@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "pairinteraction/interfaces/TransformationBuilderInterface.hpp"
+#include "pairinteraction/interfaces/SorterBuilderInterface.hpp"
 #include "pairinteraction/utils/eigen_assertion.hpp"
 #include "pairinteraction/utils/eigen_compat.hpp"
 #include "pairinteraction/utils/traits.hpp"
@@ -21,8 +21,7 @@ template <typename Scalar>
 class DiagonalizerInterface;
 
 template <typename Derived>
-class System
-    : public TransformationBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
+class System : public SorterBuilderInterface<typename traits::CrtpTraits<Derived>::scalar_t> {
 public:
     using scalar_t = typename traits::CrtpTraits<Derived>::scalar_t;
     using real_t = typename traits::CrtpTraits<Derived>::real_t;
