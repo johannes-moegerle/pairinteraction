@@ -93,16 +93,13 @@ Basis<Derived>::Basis(ketvec_t &&kets)
         real_t f = std::numeric_limits<real_t>::max();
         real_t m = std::numeric_limits<real_t>::max();
         Parity p = Parity::UNKNOWN;
-        // TODO: this is a workaround, and should be fixed, once we restructure the quantum number
-        // handling of the Basis class
-        if constexpr (requires { ket->has_quantum_number(std::string{}); }) {
-            // A KetPair only stores the quantum numbers that are well-defined
-            if (ket->has_quantum_number("m")) {
-                m = ket->get_quantum_number("m");
-            }
-        } else {
+        if (ket->has_quantum_number("f")) {
             f = ket->get_quantum_number("f");
+        }
+        if (ket->has_quantum_number("m")) {
             m = ket->get_quantum_number("m");
+        }
+        if (ket->has_quantum_number("parity")) {
             p = static_cast<Parity>(static_cast<int>(ket->get_quantum_number("parity")));
         }
         state_index_to_quantum_number_f.push_back(f);
@@ -438,16 +435,13 @@ std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
         real_t f = std::numeric_limits<real_t>::max();
         real_t m = std::numeric_limits<real_t>::max();
         Parity p = Parity::UNKNOWN;
-        // TODO: this is a workaround, and should be fixed, once we restructure the quantum number
-        // handling of the Basis class
-        if constexpr (requires { kets[i]->has_quantum_number(std::string{}); }) {
-            // A KetPair only stores the quantum numbers that are well-defined
-            if (kets[i]->has_quantum_number("m")) {
-                m = kets[i]->get_quantum_number("m");
-            }
-        } else {
+        if (kets[i]->has_quantum_number("f")) {
             f = kets[i]->get_quantum_number("f");
+        }
+        if (kets[i]->has_quantum_number("m")) {
             m = kets[i]->get_quantum_number("m");
+        }
+        if (kets[i]->has_quantum_number("parity")) {
             p = static_cast<Parity>(static_cast<int>(kets[i]->get_quantum_number("parity")));
         }
         result->state_index_to_quantum_number_f[i] = f;
