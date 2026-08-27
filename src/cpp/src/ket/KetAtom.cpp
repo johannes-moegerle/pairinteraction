@@ -22,6 +22,10 @@ Database &KetAtom::get_database() const { return database; }
 
 size_t KetAtom::get_id_in_database() const { return id_in_database; }
 
+bool KetAtom::has_quantum_number(const std::string &name) const {
+    return quantum_numbers.contains(name);
+}
+
 double KetAtom::get_quantum_number(const std::string &name) const {
     return quantum_numbers.at(name);
 }
