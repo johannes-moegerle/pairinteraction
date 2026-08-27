@@ -95,12 +95,15 @@ Basis<Derived>::Basis(ketvec_t &&kets)
         Parity p = Parity::UNKNOWN;
         // TODO: this is a workaround, and should be fixed, once we restructure the quantum number
         // handling of the Basis class
-        if constexpr (requires { ket->get_quantum_number(std::string{}); }) {
+        if constexpr (requires { ket->has_quantum_number(std::string{}); }) {
+            // A KetPair only stores the quantum numbers that are well-defined
+            if (ket->has_quantum_number("m")) {
+                m = ket->get_quantum_number("m");
+            }
+        } else {
             f = ket->get_quantum_number("f");
             m = ket->get_quantum_number("m");
             p = static_cast<Parity>(static_cast<int>(ket->get_quantum_number("parity")));
-        } else {
-            m = ket->get_quantum_number_m();
         }
         state_index_to_quantum_number_f.push_back(f);
         state_index_to_quantum_number_m.push_back(m);
@@ -437,12 +440,15 @@ std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
         Parity p = Parity::UNKNOWN;
         // TODO: this is a workaround, and should be fixed, once we restructure the quantum number
         // handling of the Basis class
-        if constexpr (requires { kets[i]->get_quantum_number(std::string{}); }) {
+        if constexpr (requires { kets[i]->has_quantum_number(std::string{}); }) {
+            // A KetPair only stores the quantum numbers that are well-defined
+            if (kets[i]->has_quantum_number("m")) {
+                m = kets[i]->get_quantum_number("m");
+            }
+        } else {
             f = kets[i]->get_quantum_number("f");
             m = kets[i]->get_quantum_number("m");
             p = static_cast<Parity>(static_cast<int>(kets[i]->get_quantum_number("parity")));
-        } else {
-            m = kets[i]->get_quantum_number_m();
         }
         result->state_index_to_quantum_number_f[i] = f;
         result->state_index_to_quantum_number_m[i] = m;
