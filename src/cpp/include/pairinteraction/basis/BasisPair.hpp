@@ -72,6 +72,7 @@ public:
     std::shared_ptr<const BasisAtom<Scalar>> get_basis1() const;
     std::shared_ptr<const BasisAtom<Scalar>> get_basis2() const;
     int get_ket_index_from_tuple(size_t state_index1, size_t state_index2) const;
+    std::shared_ptr<const Type> canonicalized() const override;
     std::shared_ptr<const Type> merge(std::shared_ptr<const Type> other) const override;
 
     Eigen::SparseMatrix<Scalar, Eigen::RowMajor>

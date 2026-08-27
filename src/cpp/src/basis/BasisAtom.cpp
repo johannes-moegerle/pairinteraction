@@ -55,6 +55,13 @@ const std::string &BasisAtom<Scalar>::get_canonical_basis_id() const {
 }
 
 template <typename Scalar>
+std::shared_ptr<const typename BasisAtom<Scalar>::Type> BasisAtom<Scalar>::canonicalized() const {
+    // Constructing a new basis from the kets yields a basis with identity coefficients
+    return std::make_shared<const Type>(Private(), ketvec_t(this->kets),
+                                        std::string(canonical_basis_id), database);
+}
+
+template <typename Scalar>
 std::shared_ptr<const typename BasisAtom<Scalar>::Type>
 BasisAtom<Scalar>::merge(std::shared_ptr<const Type> other) const {
     if (&database != &other->database) {

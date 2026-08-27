@@ -324,29 +324,6 @@ void Basis<Derived>::get_indices_of_blocks_without_checks(
 }
 
 template <typename Derived>
-std::shared_ptr<const Derived> Basis<Derived>::canonicalized() const {
-    auto result = std::make_shared<Derived>(derived());
-
-    size_t n = kets.size();
-
-    result->coefficients.resize(n, n);
-    result->coefficients.setIdentity();
-
-    for (const std::string &name : quantum_number_names) {
-        std::vector<real_t> quantum_numbers;
-        quantum_numbers.reserve(kets.size());
-        for (const auto &ket : kets) {
-            quantum_numbers.push_back(ket->has_quantum_number(name)
-                                          ? static_cast<real_t>(ket->get_quantum_number(name))
-                                          : std::numeric_limits<real_t>::max());
-        }
-        result->quantum_numbers_of_states[name] = std::move(quantum_numbers);
-    }
-
-    return result;
-}
-
-template <typename Derived>
 bool Basis<Derived>::is_canonical() const {
     constexpr real_t numerical_precision = 100 * std::numeric_limits<real_t>::epsilon();
 
