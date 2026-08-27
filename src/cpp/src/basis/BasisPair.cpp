@@ -62,6 +62,14 @@ int BasisPair<Scalar>::get_ket_index_from_tuple(size_t state_index1, size_t stat
 }
 
 template <typename Scalar>
+std::shared_ptr<const typename BasisPair<Scalar>::Type> BasisPair<Scalar>::canonicalized() const {
+    // Constructing a new basis from the kets yields a basis with identity coefficients
+    return std::make_shared<const Type>(Private(), ketvec_t(this->kets),
+                                        map_range_t(state_index1_to_state_index_range2),
+                                        map_indices_t(state_indices_to_ket_index), basis1, basis2);
+}
+
+template <typename Scalar>
 std::shared_ptr<const typename BasisPair<Scalar>::Type>
 BasisPair<Scalar>::merge(std::shared_ptr<const Type> other) const {
     if (basis1 != other->basis1 || basis2 != other->basis2) {
