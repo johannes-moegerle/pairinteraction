@@ -15,9 +15,17 @@
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace pairinteraction {
+template <typename Scalar>
+const std::map<SorterType, std::string> BasisPair<Scalar>::quantum_number_names{
+    {SorterType::QUANTUM_NUMBER_F, "f"},
+    {SorterType::QUANTUM_NUMBER_M, "m"},
+    {SorterType::PARITY, "product_of_parities"},
+};
+
 template <typename Scalar>
 BasisPair<Scalar>::BasisPair(Private /*unused*/, ketvec_t &&kets,
                              map_range_t &&state_index1_to_state_index_range2,

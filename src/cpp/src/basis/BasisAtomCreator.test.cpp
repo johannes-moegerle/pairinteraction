@@ -71,18 +71,18 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
     auto basis = basis_unsorted->transformed(sorter);
 
     // Check if the basis is properly sorted
-    auto parity = Parity::ODD;
+    auto parity = static_cast<double>(Parity::ODD);
     auto quantum_number_m = std::numeric_limits<double>::lowest();
     for (size_t i = 0; i < basis->get_number_of_states(); ++i) {
-        DOCTEST_MESSAGE("State ", i, ": Parity = ", basis->get_parity(i),
-                        ", M = ", basis->get_quantum_number_m(i));
-        DOCTEST_CHECK(basis->get_parity(i) >= parity);
-        if (basis->get_parity(i) != parity) {
-            parity = basis->get_parity(i);
+        DOCTEST_MESSAGE("State ", i, ": Parity = ", basis->get_quantum_number("parity", i),
+                        ", M = ", basis->get_quantum_number("m", i));
+        DOCTEST_CHECK(basis->get_quantum_number("parity", i) >= parity);
+        if (basis->get_quantum_number("parity", i) != parity) {
+            parity = basis->get_quantum_number("parity", i);
             quantum_number_m = std::numeric_limits<double>::lowest();
         }
-        DOCTEST_CHECK(basis->get_quantum_number_m(i) >= quantum_number_m);
-        quantum_number_m = basis->get_quantum_number_m(i);
+        DOCTEST_CHECK(basis->get_quantum_number("m", i) >= quantum_number_m);
+        quantum_number_m = basis->get_quantum_number("m", i);
     }
 
     // Check that the blocks are correctly determined
