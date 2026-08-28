@@ -17,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -117,6 +118,15 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             "The quantum number m must not be restricted because it is not well-defined.");
     }
 
+    // Likewise, the product of the parities of a pair state is only well-defined if the parity is
+    // well-defined for both atoms
+    const bool has_product_of_parities =
+        basis1->has_quantum_number("parity") && basis2->has_quantum_number("parity");
+    if (!has_product_of_parities && parity_under_inversion != Parity::UNKNOWN) {
+        throw std::invalid_argument("The parity under inversion must not be restricted because the "
+                                    "product of the parities is not well-defined.");
+    }
+
     ketvec_t kets;
     kets.reserve(eigenenergies1.size() * eigenenergies2.size());
 
@@ -137,7 +147,8 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
     // Construct the symmetry transformation by recording the contribution of the pair state
     // |idx1, idx2> to the symmetrized basis. Because the two atoms are identical (enforced above),
     // a one-atom state is uniquely identified across both atoms by its state index alone.
-    auto construct_symmetry_transformation = [&](Eigen::Index row_index, size_t idx1, size_t idx2) {
+    auto construct_symmetry_transformation = [&](Eigen::Index row_index, size_t idx1, size_t idx2,
+                                                 std::optional<int> product_of_parities) {
         // Following https://doi.org/10.1088/1361-6455/aa743a, pair states |a, a> cannot be of even
         // parity.
         if (idx1 == idx2 &&
@@ -176,11 +187,10 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             // permutation-symmetric states are the same.
             phase = -static_cast<int>(parity_under_permutation);
         } else {
-            // If only inversion is restricted, the phase is determined by the product of the
-            // parities of the one-atom states and the specified inversion parity.
-            phase = -static_cast<int>(parity_under_inversion) *
-                static_cast<int>(basis1->get_quantum_number("parity", idx1)) *
-                static_cast<int>(basis2->get_quantum_number("parity", idx2));
+            // Reaching this branch implies that inversion is restricted,
+            // so the product of the parities is well-defined and value() does not throw.
+            // The phase is determined by the product of the parities and the inversion parity.
+            phase = -static_cast<int>(parity_under_inversion) * product_of_parities.value();
         }
         transformation_triplets.emplace_back(row_index, column_index, phase * inverse_sqrt_two);
     };
@@ -212,17 +222,19 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             assert(!range_energy.is_finite() ||
                    (energy >= range_energy.min() && energy <= range_energy.max()));
 
-            // Check the parity of the product of the parities
-            if (inferred_product_of_parities != Parity::UNKNOWN) {
-                if (static_cast<int>(basis1->get_quantum_number("parity", idx1)) *
-                        static_cast<int>(basis2->get_quantum_number("parity", idx2)) !=
-                    static_cast<int>(inferred_product_of_parities)) {
+            // Get the quantum numbers and check them
+            std::unordered_map<std::string, double> quantum_numbers;
+
+            std::optional<int> product_of_parities;
+            if (has_product_of_parities) {
+                product_of_parities = static_cast<int>(basis1->get_quantum_number("parity", idx1)) *
+                    static_cast<int>(basis2->get_quantum_number("parity", idx2));
+                if (inferred_product_of_parities != Parity::UNKNOWN &&
+                    product_of_parities.value() != static_cast<int>(inferred_product_of_parities)) {
                     continue;
                 }
+                quantum_numbers["product_of_parities"] = product_of_parities.value();
             }
-
-            // Get the quantum numbers and check the quantum number m
-            std::unordered_map<std::string, double> quantum_numbers;
             if (has_quantum_number_m) {
                 const real_t m =
                     basis1->get_quantum_number("m", idx1) + basis2->get_quantum_number("m", idx2);
@@ -246,7 +258,7 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
 
             auto row_index = static_cast<Eigen::Index>(ket_index++);
             if (has_symmetry_restriction) {
-                construct_symmetry_transformation(row_index, idx1, idx2);
+                construct_symmetry_transformation(row_index, idx1, idx2, product_of_parities);
             }
         }
     }
