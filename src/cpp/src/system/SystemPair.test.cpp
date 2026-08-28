@@ -12,11 +12,14 @@
 #include "pairinteraction/diagonalize/DiagonalizerFeast.hpp"
 #include "pairinteraction/diagonalize/DiagonalizerLapackeEvr.hpp"
 #include "pairinteraction/diagonalize/diagonalize.hpp"
+#include "pairinteraction/enums/Parity.hpp"
+#include "pairinteraction/enums/SorterType.hpp"
 #include "pairinteraction/ket/KetAtom.hpp"
 #include "pairinteraction/ket/KetAtomCreator.hpp"
 #include "pairinteraction/system/SystemAtom.hpp"
 #include "pairinteraction/utils/Range.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <doctest/doctest.h>
 #include <fmt/ranges.h>
@@ -103,6 +106,82 @@ DOCTEST_TEST_CASE("construct a pair Hamiltonian in a non-canonical pair basis") 
         transformation.adjoint() * reference_matrix * transformation;
 
     DOCTEST_CHECK(transformed_system.get_matrix().isApprox(expected_matrix, 1e-11));
+}
+
+DOCTEST_TEST_CASE("block-diagonalize a pair Hamiltonian with dipole-quadrupole interaction") {
+    // Permuting the two atoms reverses the direction of the interatomic axis. Therefore the
+    // dipole-quadrupole interaction conserves neither the parity under permutation nor the product
+    // of the parities, whereas the parity under inversion is conserved by every interaction order.
+    // Block-diagonalizing the Hamiltonian by a parity that is not conserved would yield wrong
+    // eigenenergies.
+    auto &database = Database::get_global_instance();
+    auto diagonalizer = DiagonalizerEigen<double>();
+
+    // The quadrupole interaction requires states whose l differs by two
+    auto basis = BasisAtomCreator<double>()
+                     .set_species("Rb")
+                     .restrict_quantum_number("n", 60, 61)
+                     .restrict_quantum_number("l", 0, 2)
+                     .restrict_quantum_number("m", -0.5, 0.5)
+                     .create(database);
+
+    SystemAtom<double> system(basis);
+    system.diagonalize(diagonalizer);
+
+    for (int interaction_order : {3, 4}) {
+        auto get_eigenenergies = [&](const std::shared_ptr<const BasisPair<double>> &basis_pair) {
+            auto system_pair = SystemPair<double>(basis_pair);
+            system_pair.set_distance_vector({0, 0, 1 * UM_IN_ATOMIC_UNITS});
+            system_pair.set_interaction_order(interaction_order);
+            system_pair.diagonalize(diagonalizer);
+            return system_pair.get_eigenenergies();
+        };
+
+        DOCTEST_SUBCASE("unsymmetrized pair basis") {
+            auto basis_pair = BasisPairCreator<double>().add(system).add(system).create();
+
+            // States without quantum numbers cannot be sorted into blocks, so a basis whose
+            // quantum numbers have been discarded yields a reference that does not rely on any
+            // symmetry of the Hamiltonian
+            auto reference_basis_pair =
+                basis_pair->copy_with_coefficients(basis_pair->get_coefficients());
+
+            Eigen::VectorXd expected = get_eigenenergies(reference_basis_pair);
+            Eigen::VectorXd eigenenergies = get_eigenenergies(basis_pair);
+            DOCTEST_REQUIRE(eigenenergies.size() == expected.size());
+            DOCTEST_MESSAGE("Interaction order ", interaction_order, ": largest deviation ",
+                            (eigenenergies - expected).cwiseAbs().maxCoeff() * HARTREE_IN_GHZ,
+                            " GHz");
+            DOCTEST_CHECK(eigenenergies.isApprox(expected, 1e-11));
+        }
+
+        DOCTEST_SUBCASE("permutation-symmetrized pair basis") {
+            auto basis_pair = BasisPairCreator<double>()
+                                  .add(system)
+                                  .add(system)
+                                  .restrict_parity_under_permutation(Parity::ODD)
+                                  .create();
+            auto reference_basis_pair =
+                basis_pair->copy_with_coefficients(basis_pair->get_coefficients());
+
+            Eigen::VectorXd expected = get_eigenenergies(reference_basis_pair);
+            Eigen::VectorXd eigenenergies = get_eigenenergies(basis_pair);
+            DOCTEST_REQUIRE(eigenenergies.size() == expected.size());
+            DOCTEST_MESSAGE("Interaction order ", interaction_order, ": largest deviation ",
+                            (eigenenergies - expected).cwiseAbs().maxCoeff() * HARTREE_IN_GHZ,
+                            " GHz");
+            DOCTEST_CHECK(eigenenergies.isApprox(expected, 1e-11));
+
+            // Because the parity under inversion is conserved by all interaction orders, the
+            // Hamiltonian can be block-diagonalized by it even though the product of the parities
+            // must not be used for dipole-quadrupole interaction
+            auto sorted_basis_pair = basis_pair->transformed(
+                basis_pair->get_sorter({SorterType::PARITY_UNDER_INVERSION}));
+            DOCTEST_CHECK(
+                sorted_basis_pair->get_indices_of_blocks({SorterType::PARITY_UNDER_INVERSION})
+                    .size() == 2);
+        }
+    }
 }
 
 #ifdef WITH_LAPACKE

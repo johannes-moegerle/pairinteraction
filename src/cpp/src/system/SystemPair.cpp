@@ -278,6 +278,9 @@ void SystemPair<Scalar>::construct_hamiltonian() const {
     bool sort_by_quantum_number_f = this->basis->has_quantum_number("f");
     bool sort_by_quantum_number_m = this->basis->has_quantum_number("m");
     bool sort_by_parity = this->basis->has_quantum_number("product_of_parities");
+    bool sort_by_parity_under_inversion = this->basis->has_quantum_number("parity_under_inversion");
+    bool sort_by_parity_under_permutation =
+        this->basis->has_quantum_number("parity_under_permutation");
 
     // Add Rydberg-Rydberg interaction via Green tensor
     // H_RR = Σ_{ij} D_1,left[i] * G_{ij} * D_2,right[j]
@@ -285,40 +288,59 @@ void SystemPair<Scalar>::construct_hamiltonian() const {
     // D_2,right uses normal convention.
 
     // Helper function for adding Rydberg-Rydberg interaction
-    auto add_interaction = [this, &sort_by_quantum_number_f, &sort_by_quantum_number_m](
-                               const auto &entries, const auto &op1, const auto &op2, int delta) {
-        for (const auto &entry : entries) {
-            if (std::holds_alternative<
-                    typename GreenTensorInterpolator<Scalar>::OmegaDependentEntry>(entry)) {
-                throw std::logic_error(
-                    "Green tensor with omega dependent entries is currently not supported.");
-            }
+    auto add_interaction =
+        [this, &sort_by_quantum_number_f, &sort_by_quantum_number_m, &sort_by_parity,
+         &sort_by_parity_under_permutation](const auto &entries, const auto &op1, const auto &op2,
+                                            int kappa1, int kappa2, int delta) {
+            for (const auto &entry : entries) {
+                if (std::holds_alternative<
+                        typename GreenTensorInterpolator<Scalar>::OmegaDependentEntry>(entry)) {
+                    throw std::logic_error(
+                        "Green tensor with omega dependent entries is currently not supported.");
+                }
 
-            const auto &constant_entry =
-                std::get<typename GreenTensorInterpolator<Scalar>::ConstantEntry>(entry);
-            this->matrix += constant_entry.val() *
-                utils::calculate_tensor_product_in_canonical_basis(this->basis, this->basis,
-                                                                   op1[constant_entry.row()],
-                                                                   op2[constant_entry.col()]);
+                const auto &constant_entry =
+                    std::get<typename GreenTensorInterpolator<Scalar>::ConstantEntry>(entry);
+                this->matrix += constant_entry.val() *
+                    utils::calculate_tensor_product_in_canonical_basis(this->basis, this->basis,
+                                                                       op1[constant_entry.row()],
+                                                                       op2[constant_entry.col()]);
 
-            sort_by_quantum_number_f = false;
-            if (constant_entry.row() != constant_entry.col() + delta) {
-                sort_by_quantum_number_m = false;
+                sort_by_quantum_number_f = false;
+                if (constant_entry.row() != constant_entry.col() + delta) {
+                    sort_by_quantum_number_m = false;
+                }
+
+                // Permuting the two atoms exchanges the roles of the multipole moments kappa1 and
+                // kappa2 and thereby reverses the direction of the interatomic axis, which
+                // multiplies the term by (-1)^(kappa1 + kappa2). Thus, a term with an odd sum of
+                // the multipole orders does not conserve the parity under permutation, and neither
+                // the product of the parities because it is the product of the parities under
+                // permutation and inversion. The parity under inversion is conserved by all terms
+                // because the inversion about the center of the two atoms is a symmetry of the
+                // pair.
+                if ((kappa1 + kappa2) % 2 != 0) {
+                    sort_by_parity = false;
+                    sort_by_parity_under_permutation = false;
+                }
             }
-        }
-    };
+        };
 
     // Dipole-dipole interaction
-    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(1, 1), op.d1, op.d2, 0);
+    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(1, 1), op.d1, op.d2, 1, 1,
+                    0);
 
     // Dipole-quadrupole interaction
-    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(1, 2), op.d1, op.q2, -1);
+    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(1, 2), op.d1, op.q2, 1, 2,
+                    -1);
 
     // Quadrupole-dipole interaction
-    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(2, 1), op.q1, op.d2, +1);
+    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(2, 1), op.q1, op.d2, 2, 1,
+                    +1);
 
     // Quadrupole-quadrupole interaction
-    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(2, 2), op.q1, op.q2, 0);
+    add_interaction(green_tensor_interpolator_ptr->get_spherical_entries(2, 2), op.q1, op.q2, 2, 2,
+                    0);
 
     // Transform from the canonical basis into the actual basis
     this->matrix =
@@ -334,6 +356,12 @@ void SystemPair<Scalar>::construct_hamiltonian() const {
     }
     if (sort_by_parity) {
         this->blockdiagonalizing_labels.push_back(SorterType::PARITY);
+    }
+    if (sort_by_parity_under_inversion) {
+        this->blockdiagonalizing_labels.push_back(SorterType::PARITY_UNDER_INVERSION);
+    }
+    if (sort_by_parity_under_permutation) {
+        this->blockdiagonalizing_labels.push_back(SorterType::PARITY_UNDER_PERMUTATION);
     }
 }
 
