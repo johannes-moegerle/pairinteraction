@@ -107,6 +107,12 @@ DOCTEST_TEST_CASE("create a basis and sort it according to parity and m") {
     matrix.setIdentity();
     auto transformed = basis->transformed(matrix);
     DOCTEST_CHECK(transformed->get_coefficients().isApprox(basis->get_coefficients()));
+
+    // Atomic states cannot be labeled by sorter types that only exist for pair states
+    DOCTEST_CHECK_THROWS_AS(basis->get_sorter({SorterType::PARITY_UNDER_PERMUTATION}),
+                            std::invalid_argument);
+    DOCTEST_CHECK_THROWS_AS(basis->get_indices_of_blocks({SorterType::PARITY_UNDER_INVERSION}),
+                            std::invalid_argument);
 }
 
 DOCTEST_TEST_CASE("a basis is canonical if its coefficients are the identity matrix") {

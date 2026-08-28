@@ -579,6 +579,196 @@ DOCTEST_TEST_CASE("create a symmetrized BasisPair") {
         // Without a parity restriction, two different systems remain allowed.
         DOCTEST_CHECK_NOTHROW(BasisPairCreator<double>().add(system).add(system_other).create());
     }
+
+    DOCTEST_SUBCASE("label the states by the parity under permutation") {
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system)
+                                     .add(system)
+                                     .restrict_parity_under_permutation(Parity::ODD)
+                                     .create();
+
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_inversion"));
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("product_of_parities"));
+
+        bool has_even_inversion = false;
+        bool has_odd_inversion = false;
+        for (size_t i = 0; i < symmetrized_basis->get_number_of_states(); ++i) {
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("parity_under_permutation", i) ==
+                          static_cast<int>(Parity::ODD));
+
+            // The parity under inversion is not restricted but follows from the product of the
+            // parities
+            const int inversion = static_cast<int>(
+                symmetrized_basis->get_quantum_number("parity_under_inversion", i));
+            DOCTEST_CHECK(inversion ==
+                          static_cast<int>(Parity::ODD) *
+                              static_cast<int>(
+                                  symmetrized_basis->get_quantum_number("product_of_parities", i)));
+            has_even_inversion |= inversion == static_cast<int>(Parity::EVEN);
+            has_odd_inversion |= inversion == static_cast<int>(Parity::ODD);
+        }
+
+        // The derived parity differs between the states, so it must be stored per state
+        DOCTEST_CHECK(has_even_inversion);
+        DOCTEST_CHECK(has_odd_inversion);
+    }
+
+    DOCTEST_SUBCASE("label the states by the parity under inversion") {
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system)
+                                     .add(system)
+                                     .restrict_parity_under_inversion(Parity::ODD)
+                                     .create();
+
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_inversion"));
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("product_of_parities"));
+
+        bool has_even_permutation = false;
+        bool has_odd_permutation = false;
+        for (size_t i = 0; i < symmetrized_basis->get_number_of_states(); ++i) {
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("parity_under_inversion", i) ==
+                          static_cast<int>(Parity::ODD));
+
+            const int permutation = static_cast<int>(
+                symmetrized_basis->get_quantum_number("parity_under_permutation", i));
+            DOCTEST_CHECK(permutation ==
+                          static_cast<int>(Parity::ODD) *
+                              static_cast<int>(
+                                  symmetrized_basis->get_quantum_number("product_of_parities", i)));
+            has_even_permutation |= permutation == static_cast<int>(Parity::EVEN);
+            has_odd_permutation |= permutation == static_cast<int>(Parity::ODD);
+        }
+
+        DOCTEST_CHECK(has_even_permutation);
+        DOCTEST_CHECK(has_odd_permutation);
+    }
+
+    DOCTEST_SUBCASE("label the states by both parities") {
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system)
+                                     .add(system)
+                                     .restrict_parity_under_inversion(Parity::ODD)
+                                     .restrict_parity_under_permutation(Parity::ODD)
+                                     .create();
+
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_inversion"));
+        DOCTEST_REQUIRE(symmetrized_basis->has_quantum_number("parity_under_permutation"));
+
+        for (size_t i = 0; i < symmetrized_basis->get_number_of_states(); ++i) {
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("parity_under_inversion", i) ==
+                          static_cast<int>(Parity::ODD));
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("parity_under_permutation", i) ==
+                          static_cast<int>(Parity::ODD));
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("product_of_parities", i) ==
+                          static_cast<int>(Parity::EVEN));
+        }
+    }
+
+    DOCTEST_SUBCASE("an unsymmetrized pair basis has no parities") {
+        DOCTEST_CHECK_FALSE(canonical_basis->has_quantum_number("parity_under_inversion"));
+        DOCTEST_CHECK_FALSE(canonical_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_CHECK_THROWS_AS(canonical_basis->get_quantum_number("parity_under_permutation", 0),
+                                std::invalid_argument);
+    }
+
+    DOCTEST_SUBCASE("the parities survive the diagonalization of a pair system") {
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system)
+                                     .add(system)
+                                     .restrict_parity_under_permutation(Parity::ODD)
+                                     .create();
+
+        auto system_pair = SystemPair<double>(symmetrized_basis)
+                               .set_distance_vector({0, 0, 1 * UM_IN_ATOMIC_UNITS});
+        system_pair.diagonalize(diagonalizer);
+        auto eigenbasis = system_pair.get_eigenbasis();
+
+        DOCTEST_REQUIRE(eigenbasis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_REQUIRE(eigenbasis->has_quantum_number("parity_under_inversion"));
+
+        for (size_t i = 0; i < eigenbasis->get_number_of_states(); ++i) {
+            DOCTEST_CHECK(eigenbasis->get_quantum_number("parity_under_permutation", i) ==
+                          static_cast<int>(Parity::ODD));
+            DOCTEST_CHECK(
+                eigenbasis->get_quantum_number("parity_under_inversion", i) ==
+                static_cast<int>(Parity::ODD) *
+                    static_cast<int>(eigenbasis->get_quantum_number("product_of_parities", i)));
+        }
+    }
+
+    DOCTEST_SUBCASE("the parities are dropped if the basis is canonicalized or gets new "
+                    "coefficients") {
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system)
+                                     .add(system)
+                                     .restrict_parity_under_permutation(Parity::ODD)
+                                     .create();
+
+        auto canonicalized_basis = symmetrized_basis->canonicalized();
+        DOCTEST_CHECK_FALSE(canonicalized_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_CHECK_FALSE(canonicalized_basis->has_quantum_number("parity_under_inversion"));
+
+        auto copied_basis =
+            symmetrized_basis->copy_with_coefficients(symmetrized_basis->get_coefficients());
+        DOCTEST_CHECK_FALSE(copied_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_CHECK_FALSE(copied_basis->has_quantum_number("parity_under_inversion"));
+    }
+
+    DOCTEST_SUBCASE("only the parity under permutation is defined without an atomic parity") {
+        SystemAtom<double> system_with_field(basis);
+        system_with_field.set_electric_field({0, 0, 1 * VOLT_PER_CM_IN_ATOMIC_UNITS});
+        system_with_field.diagonalize(diagonalizer);
+        DOCTEST_REQUIRE_FALSE(system_with_field.get_basis()->has_quantum_number("parity"));
+
+        auto symmetrized_basis = BasisPairCreator<double>()
+                                     .add(system_with_field)
+                                     .add(system_with_field)
+                                     .restrict_parity_under_permutation(Parity::ODD)
+                                     .create();
+
+        DOCTEST_CHECK(symmetrized_basis->has_quantum_number("parity_under_permutation"));
+        DOCTEST_CHECK_FALSE(symmetrized_basis->has_quantum_number("parity_under_inversion"));
+        DOCTEST_CHECK_FALSE(symmetrized_basis->has_quantum_number("product_of_parities"));
+        for (size_t i = 0; i < symmetrized_basis->get_number_of_states(); ++i) {
+            DOCTEST_CHECK(symmetrized_basis->get_quantum_number("parity_under_permutation", i) ==
+                          static_cast<int>(Parity::ODD));
+        }
+
+        // The parity under inversion cannot be restricted because it would require the product of
+        // the parities
+        DOCTEST_CHECK_THROWS_AS(BasisPairCreator<double>()
+                                    .add(system_with_field)
+                                    .add(system_with_field)
+                                    .restrict_parity_under_inversion(Parity::ODD)
+                                    .create(),
+                                std::invalid_argument);
+    }
+
+    DOCTEST_SUBCASE("the quantum numbers of transformed states are checked") {
+        auto transformation =
+            build_manual_symmetrizer(canonical_basis, Parity::UNKNOWN, Parity::ODD);
+        const auto number_of_states = static_cast<size_t>(transformation.cols());
+
+        // The states cannot be labeled by an unknown quantum number
+        DOCTEST_CHECK_THROWS_AS(
+            canonical_basis->transformed(transformation,
+                                         {{"unknown", std::vector<double>(number_of_states, 1)}}),
+            std::invalid_argument);
+
+        // The number of quantum numbers must match the number of transformed states
+        DOCTEST_CHECK_THROWS_AS(
+            canonical_basis->transformed(
+                transformation,
+                {{"parity_under_permutation", std::vector<double>(number_of_states + 1, 1)}}),
+            std::invalid_argument);
+
+        // Without quantum numbers, the parities stay undefined
+        auto transformed_basis = canonical_basis->transformed(transformation, {});
+        DOCTEST_CHECK(transformed_basis->get_number_of_states() == number_of_states);
+        DOCTEST_CHECK_FALSE(transformed_basis->has_quantum_number("parity_under_permutation"));
+    }
 }
 
 } // namespace pairinteraction

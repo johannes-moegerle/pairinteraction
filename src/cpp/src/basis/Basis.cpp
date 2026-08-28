@@ -386,10 +386,23 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
 }
 
 template <typename Derived>
-std::shared_ptr<const Derived> Basis<Derived>::transformed(
-    const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation) const {
+std::shared_ptr<const Derived>
+Basis<Derived>::transformed(const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation,
+                            const std::unordered_map<std::string, std::vector<real_t>>
+                                &quantum_numbers_of_transformed_states) const {
     const real_t numerical_precision =
         100 * std::sqrt(coefficients.rows()) * std::numeric_limits<real_t>::epsilon();
+
+    for (const auto &[name, quantum_numbers] : quantum_numbers_of_transformed_states) {
+        if (!quantum_numbers_of_states.contains(name)) {
+            throw std::invalid_argument("The states cannot be labeled by the quantum number " +
+                                        name + ".");
+        }
+        if (quantum_numbers.size() != static_cast<size_t>(transformation.cols())) {
+            throw std::invalid_argument("Incompatible number of quantum numbers for the label " +
+                                        name + ".");
+        }
+    }
 
     // Create a copy of the current object
     auto transformed = std::make_shared<Derived>(derived());
@@ -430,6 +443,11 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
                 transformed_quantum_numbers[i] = std::numeric_limits<real_t>::max();
             }
         }
+    }
+
+    // Explicitly specified quantum numbers are set or overwritten
+    for (const auto &[name, quantum_numbers] : quantum_numbers_of_transformed_states) {
+        transformed->quantum_numbers_of_states.at(name) = quantum_numbers;
     }
 
     return transformed;

@@ -144,6 +144,11 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
     }
     const double inverse_sqrt_two = 1 / std::sqrt(2.0);
 
+    // The parities of the symmetrized states, recorded per state
+    constexpr real_t undefined = std::numeric_limits<real_t>::max();
+    std::vector<real_t> parity_under_inversion_of_states;
+    std::vector<real_t> parity_under_permutation_of_states;
+
     // Construct the symmetry transformation by recording the contribution of the pair state
     // |idx1, idx2> to the symmetrized basis. Because the two atoms are identical (enforced above),
     // a one-atom state is uniquely identified across both atoms by its state index alone.
@@ -156,6 +161,27 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             return;
         }
 
+        // Determine the parity of the symmetrized state under permutation. It is a property of
+        // the superposition and thus cannot be obtained from the kets.
+        real_t parity_under_permutation_of_state = 0;
+        if (parity_under_permutation != Parity::UNKNOWN) {
+            // If both inversion and permutation are restricted, the earlier filter on the product
+            // of parities already guarantees that the phases in the inversion- and
+            // permutation-symmetric states are the same.
+            parity_under_permutation_of_state = static_cast<int>(parity_under_permutation);
+        } else {
+            // Reaching this branch implies that inversion is restricted,
+            // so the product of the parities is well-defined and value() does not throw.
+            parity_under_permutation_of_state =
+                static_cast<int>(parity_under_inversion) * product_of_parities.value();
+        }
+
+        // The parity under inversion follows from
+        // parity_under_inversion * parity_under_permutation == product_of_parities.
+        const real_t parity_under_inversion_of_state = product_of_parities.has_value()
+            ? parity_under_permutation_of_state * product_of_parities.value()
+            : undefined;
+
         // Map the (unordered) pair of one-atom state indices to the column index of the symmetrized
         // state it contributes to, creating a new column the first time the pair is encountered.
         std::array<size_t, 2> ordered_indices{std::max(idx1, idx2), std::min(idx1, idx2)};
@@ -163,6 +189,8 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             ket_indices2state_index.try_emplace(ordered_indices, state_index);
         if (inserted) {
             ++state_index;
+            parity_under_inversion_of_states.push_back(parity_under_inversion_of_state);
+            parity_under_permutation_of_states.push_back(parity_under_permutation_of_state);
         }
         Eigen::Index column_index = iterator->second;
 
@@ -179,20 +207,10 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
             return;
         }
 
-        // Determine the phase of the contribution of the partner state with idx1 < idx2.
-        int phase = 0;
-        if (parity_under_permutation != Parity::UNKNOWN) {
-            // If both inversion and permutation are restricted, the earlier filter on the product
-            // of parities already guarantees that the phases in the inversion- and
-            // permutation-symmetric states are the same.
-            phase = -static_cast<int>(parity_under_permutation);
-        } else {
-            // Reaching this branch implies that inversion is restricted,
-            // so the product of the parities is well-defined and value() does not throw.
-            // The phase is determined by the product of the parities and the inversion parity.
-            phase = -static_cast<int>(parity_under_inversion) * product_of_parities.value();
-        }
-        transformation_triplets.emplace_back(row_index, column_index, phase * inverse_sqrt_two);
+        // The phase of the contribution of the partner state with idx1 < idx2 is given by the
+        // parity of the symmetrized state under permutation.
+        transformation_triplets.emplace_back(row_index, column_index,
+                                             -parity_under_permutation_of_state * inverse_sqrt_two);
     };
 
     // Loop only over states with an allowed energy
@@ -292,8 +310,10 @@ std::shared_ptr<const BasisPair<Scalar>> BasisPairCreator<Scalar>::create() cons
         }
     }
 
-    // TODO: on the long run, construct the coefficient matrix directly
-    return basis->transformed(transformation_matrix);
+    return basis->transformed(
+        transformation_matrix,
+        {{"parity_under_inversion", std::move(parity_under_inversion_of_states)},
+         {"parity_under_permutation", std::move(parity_under_permutation_of_states)}});
 }
 
 // Explicit instantiations

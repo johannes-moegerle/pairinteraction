@@ -19,15 +19,19 @@
 #include <nanobind/stl/complex.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/unordered_map.h>
 #include <nanobind/stl/vector.h>
 
 namespace nb = nanobind;
+using namespace nb::literals;
 using namespace pairinteraction;
 
 template <typename T>
 static void declare_basis(nb::module_ &m, std::string const &type_name) {
     std::string pyclass_name = "Basis" + type_name;
     using scalar_t = typename Basis<T>::scalar_t;
+    using real_t = typename Basis<T>::real_t;
+    using quantum_numbers_t = std::unordered_map<std::string, std::vector<real_t>>;
     nb::class_<Basis<T>, SorterBuilderInterface> pyclass(m, pyclass_name.c_str());
     pyclass.def("get_kets", &Basis<T>::get_kets)
         .def("get_ket", &Basis<T>::get_ket)
@@ -41,8 +45,9 @@ static void declare_basis(nb::module_ &m, std::string const &type_name) {
         .def("get_sorter", &Basis<T>::get_sorter)
         .def("get_indices_of_blocks", &Basis<T>::get_indices_of_blocks)
         .def("transformed",
-             nb::overload_cast<const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &>(
-                 &Basis<T>::transformed, nb::const_))
+             nb::overload_cast<const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &,
+                               const quantum_numbers_t &>(&Basis<T>::transformed, nb::const_),
+             "transformation"_a, "quantum_numbers_of_transformed_states"_a = quantum_numbers_t{})
         .def("transformed",
              nb::overload_cast<const Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> &>(
                  &Basis<T>::transformed, nb::const_))
