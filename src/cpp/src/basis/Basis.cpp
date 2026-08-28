@@ -13,10 +13,10 @@
 #include "pairinteraction/utils/eigen_compat.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -25,26 +25,6 @@ namespace pairinteraction {
 
 template <typename Scalar>
 class BasisAtom;
-
-namespace {
-// The names of the quantum numbers by which the states of a basis are labeled. Similar to a ket,
-// the parity is treated like a normal quantum number.
-const std::array<std::string, 3> quantum_number_names{"f", "m", "parity"};
-
-// Get the name of the quantum number a sorter type refers to
-const std::string &get_name(SorterType label) {
-    switch (label) {
-    case SorterType::QUANTUM_NUMBER_F:
-        return quantum_number_names[0];
-    case SorterType::QUANTUM_NUMBER_M:
-        return quantum_number_names[1];
-    case SorterType::PARITY:
-        return quantum_number_names[2];
-    default:
-        std::abort(); // Can't happen because the energy label is rejected by the callers
-    }
-}
-} // namespace
 
 template <typename Derived>
 void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_labels) const {
@@ -58,7 +38,7 @@ void Basis<Derived>::perform_blocks_checks(const std::set<SorterType> &unique_la
     std::vector<std::string> unique_quantum_number_names;
     unique_quantum_number_names.reserve(unique_labels.size());
     for (const auto &label : unique_labels) {
-        const std::string &name = get_name(label);
+        const std::string &name = Derived::quantum_number_names.at(label);
         if (!has_quantum_number(name)) {
             throw std::invalid_argument(
                 "States cannot be labeled and thus not sorted by the quantum number " + name + ".");
@@ -104,7 +84,7 @@ Basis<Derived>::Basis(ketvec_t &&kets)
     if (this->kets.empty()) {
         throw std::invalid_argument("The basis must contain at least one element.");
     }
-    for (const std::string &name : quantum_number_names) {
+    for (const auto &[label, name] : Derived::quantum_number_names) {
         std::vector<real_t> quantum_numbers;
         quantum_numbers.reserve(this->kets.size());
         for (const auto &ket : this->kets) {
@@ -292,7 +272,7 @@ void Basis<Derived>::get_sorter_without_checks(
     std::vector<const std::vector<real_t> *> quantum_numbers_of_labels;
     quantum_numbers_of_labels.reserve(labels.size());
     for (const auto &label : labels) {
-        const std::string &name = get_name(label);
+        const std::string &name = Derived::quantum_number_names.at(label);
         if (!has_quantum_number(name)) {
             throw std::invalid_argument(
                 "States cannot be labeled and thus not sorted by the quantum number " + name + ".");
@@ -327,7 +307,7 @@ void Basis<Derived>::get_indices_of_blocks_without_checks(
     std::vector<std::string> unique_quantum_number_names;
     unique_quantum_number_names.reserve(unique_labels.size());
     for (const auto &label : unique_labels) {
-        unique_quantum_number_names.push_back(get_name(label));
+        unique_quantum_number_names.push_back(Derived::quantum_number_names.at(label));
     }
 
     // A new block starts whenever a state differs from its predecessor in one of the labels

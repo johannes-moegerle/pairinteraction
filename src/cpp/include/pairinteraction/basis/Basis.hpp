@@ -28,7 +28,9 @@ enum class SorterType : unsigned char;
  * coefficients. The rows of the coefficient matrix correspond to indices of ket states and
  * the columns to indices of basis vectors.
  * The states are labeled by quantum numbers. Similar to a ket, the parity is treated like a
- * normal quantum number named "parity".
+ * normal quantum number.
+ * Which quantum numbers label the states is defined by the derived class, which has to provide
+ * them via a static quantum_number_names member that maps sorter types to names.
  * Using CRPT, it is a base class for specific basis implementations. Its
  * constructor is protected to indicate that derived classes should not allow direct instantiation.
  * Instead, a factory class should be provided that is a friend of the derived class and can create
