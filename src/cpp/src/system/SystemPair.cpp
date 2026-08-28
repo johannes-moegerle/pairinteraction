@@ -37,6 +37,8 @@ struct OperatorMatrices {
     std::vector<Eigen::SparseMatrix<Scalar, Eigen::RowMajor>> d2;
     std::vector<Eigen::SparseMatrix<Scalar, Eigen::RowMajor>> q1;
     std::vector<Eigen::SparseMatrix<Scalar, Eigen::RowMajor>> q2;
+    std::vector<Eigen::SparseMatrix<Scalar, Eigen::RowMajor>> o1;
+    std::vector<Eigen::SparseMatrix<Scalar, Eigen::RowMajor>> o2;
 };
 
 template <typename Scalar>
@@ -66,11 +68,13 @@ construct_operator_matrices(const GreenTensorInterpolator<Scalar> &green_tensor_
 
     // Operator matrices for Rydberg-Rydberg interaction
     if (!green_tensor_interpolator.get_spherical_entries(1, 1).empty() ||
-        !green_tensor_interpolator.get_spherical_entries(1, 2).empty()) {
+        !green_tensor_interpolator.get_spherical_entries(1, 2).empty() ||
+        !green_tensor_interpolator.get_spherical_entries(1, 3).empty()) {
         op.d1 = get_matrices(basis1, OperatorType::ELECTRIC_DIPOLE, {-1, 0, +1}, true);
     }
     if (!green_tensor_interpolator.get_spherical_entries(1, 1).empty() ||
-        !green_tensor_interpolator.get_spherical_entries(2, 1).empty()) {
+        !green_tensor_interpolator.get_spherical_entries(2, 1).empty() ||
+        !green_tensor_interpolator.get_spherical_entries(3, 1).empty()) {
         op.d2 = get_matrices(basis2, OperatorType::ELECTRIC_DIPOLE, {-1, 0, +1}, false);
     }
     if (!green_tensor_interpolator.get_spherical_entries(2, 2).empty() ||
@@ -83,6 +87,16 @@ construct_operator_matrices(const GreenTensorInterpolator<Scalar> &green_tensor_
         op.q2 = get_matrices(basis2, OperatorType::ELECTRIC_QUADRUPOLE, {-2, -1, 0, +1, +2}, false);
         op.q2.push_back(
             get_matrices(basis2, OperatorType::ELECTRIC_QUADRUPOLE_ZERO, {0}, false)[0]);
+    }
+    // In contrast to the quadrupole operators, no trace operator must be appended because the
+    // cartesian-to-spherical transformator for kappa == 3 does not contain trace rows.
+    if (!green_tensor_interpolator.get_spherical_entries(3, 1).empty()) {
+        op.o1 = get_matrices(basis1, OperatorType::ELECTRIC_OCTUPOLE, {-3, -2, -1, 0, +1, +2, +3},
+                             true);
+    }
+    if (!green_tensor_interpolator.get_spherical_entries(1, 3).empty()) {
+        op.o2 = get_matrices(basis2, OperatorType::ELECTRIC_OCTUPOLE, {-3, -2, -1, 0, +1, +2, +3},
+                             false);
     }
 
     return op;
@@ -215,6 +229,12 @@ void SystemPair<Scalar>::construct_hamiltonian() const {
 
     // Quadrupole-quadrupole interaction
     add_interaction(op.q1, op.q2, 2, 2);
+
+    // Dipole-octupole interaction
+    add_interaction(op.d1, op.o2, 1, 3);
+
+    // Octupole-dipole interaction
+    add_interaction(op.o1, op.d2, 3, 1);
 
     // Transform from the canonical basis into the actual basis
     this->matrix =
