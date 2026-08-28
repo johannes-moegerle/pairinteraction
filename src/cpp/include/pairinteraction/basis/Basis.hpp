@@ -56,6 +56,7 @@ public:
     size_t get_number_of_states() const;
     size_t get_number_of_kets() const;
     real_t get_quantum_number(const std::string &name, size_t state_index) const;
+    real_t get_energy(size_t state_index) const;
     std::shared_ptr<const Derived> get_state(size_t state_index) const;
     std::shared_ptr<const ket_t> get_ket(size_t ket_index) const;
     const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &get_coefficients() const;
@@ -106,5 +107,6 @@ private:
     Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> coefficients;
 
     std::unordered_map<std::string, std::vector<real_t>> quantum_numbers_of_states;
+    std::vector<real_t> energy_of_states;
 };
 } // namespace pairinteraction

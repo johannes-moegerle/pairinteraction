@@ -94,6 +94,10 @@ Basis<Derived>::Basis(ketvec_t &&kets)
         }
         quantum_numbers_of_states[name] = std::move(quantum_numbers);
     }
+    energy_of_states.reserve(this->kets.size());
+    for (const auto &ket : this->kets) {
+        energy_of_states.push_back(static_cast<real_t>(ket->get_energy()));
+    }
     coefficients.setIdentity();
 }
 
@@ -143,6 +147,8 @@ std::shared_ptr<const Derived> Basis<Derived>::copy_with_coefficients(
         std::fill(quantum_numbers.begin(), quantum_numbers.end(),
                   std::numeric_limits<real_t>::max());
     }
+    std::fill(result->energy_of_states.begin(), result->energy_of_states.end(),
+              std::numeric_limits<real_t>::max());
 
     return result;
 }
@@ -164,6 +170,15 @@ typename Basis<Derived>::real_t Basis<Derived>::get_quantum_number(const std::st
 }
 
 template <typename Derived>
+typename Basis<Derived>::real_t Basis<Derived>::get_energy(size_t state_index) const {
+    real_t energy = energy_of_states.at(state_index);
+    if (energy == std::numeric_limits<real_t>::max()) {
+        throw std::invalid_argument("The state does not have a well-defined energy.");
+    }
+    return energy;
+}
+
+template <typename Derived>
 std::shared_ptr<const Derived> Basis<Derived>::get_state(size_t state_index) const {
     // Create a copy of the current object
     auto restricted = std::make_shared<Derived>(derived());
@@ -174,6 +189,7 @@ std::shared_ptr<const Derived> Basis<Derived>::get_state(size_t state_index) con
     for (auto &[name, quantum_numbers] : restricted->quantum_numbers_of_states) {
         quantum_numbers = {quantum_numbers_of_states.at(name)[state_index]};
     }
+    restricted->energy_of_states = {energy_of_states.at(state_index)};
 
     return restricted;
 }
@@ -371,6 +387,10 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
             transformed_quantum_numbers[i] = quantum_numbers[sorter.indices()[i]];
         }
     }
+    transformed->energy_of_states.resize(sorter.size());
+    for (int i = 0; i < sorter.size(); ++i) {
+        transformed->energy_of_states[i] = energy_of_states[sorter.indices()[i]];
+    }
 
     return transformed;
 }
@@ -418,6 +438,28 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
                 transformed_quantum_numbers[i] = std::round(mean * 2) / 2;
             } else {
                 transformed_quantum_numbers[i] = std::numeric_limits<real_t>::max();
+            }
+        }
+    }
+
+    // Analogously, the energy is well-defined for a transformed state if it is conserved by the
+    // transformation.
+    set_task_status("Updating transformed energies...");
+    {
+        auto map = Eigen::Map<const Eigen::VectorX<real_t>>(
+            energy_of_states.data(), static_cast<Eigen::Index>(energy_of_states.size()));
+        Eigen::VectorX<real_t> val = probs * map;
+        Eigen::VectorX<real_t> sq = probs * map.cwiseAbs2();
+        transformed->energy_of_states.resize(probs.rows());
+
+        for (size_t i = 0; i < transformed->energy_of_states.size(); ++i) {
+            const real_t mean = val[i] / norm[i];
+            const real_t mean_sq = sq[i] / norm[i];
+            const real_t variance = std::abs(mean_sq - mean * mean);
+            if (variance < numerical_precision * std::max(static_cast<real_t>(1), mean_sq)) {
+                transformed->energy_of_states[i] = mean;
+            } else {
+                transformed->energy_of_states[i] = std::numeric_limits<real_t>::max();
             }
         }
     }

@@ -36,6 +36,7 @@ static void declare_basis(nb::module_ &m, std::string const &type_name) {
         .def("get_number_of_kets", &Basis<T>::get_number_of_kets)
         .def("has_quantum_number", &Basis<T>::has_quantum_number)
         .def("get_quantum_number", &Basis<T>::get_quantum_number)
+        .def("get_energy", &Basis<T>::get_energy)
         .def("get_coefficients", &Basis<T>::get_coefficients)
         .def("copy_with_coefficients", &Basis<T>::copy_with_coefficients)
         .def("get_sorter", &Basis<T>::get_sorter)
