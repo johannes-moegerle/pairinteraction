@@ -378,9 +378,8 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
 template <typename Derived>
 std::shared_ptr<const Derived> Basis<Derived>::transformed(
     const Eigen::SparseMatrix<scalar_t, Eigen::RowMajor> &transformation) const {
-    // TODO why is "numerical_precision = 100 * std::sqrt(coefficients.rows()) *
-    // std::numeric_limits<real_t>::epsilon()" too small for figuring out whether m is conserved?
-    real_t numerical_precision = 0.001;
+    const real_t numerical_precision =
+        100 * std::sqrt(coefficients.rows()) * std::numeric_limits<real_t>::epsilon();
 
     // Create a copy of the current object
     auto transformed = std::make_shared<Derived>(derived());
@@ -395,6 +394,10 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
 
     Eigen::SparseMatrix<real_t> probs = transformation.cwiseAbs2().transpose();
 
+    // The columns of the transformation matrix are not exactly normalized because diagonalizers
+    // prune small eigenvector entries. Thus, we have to normalize the probabilities.
+    Eigen::VectorX<real_t> norm = probs * Eigen::VectorX<real_t>::Ones(probs.cols());
+
     // A quantum number is well-defined for a transformed state if it is conserved by the
     // transformation, i.e., if its variance vanishes. In this case, it is rounded to the nearest
     // half integer to avoid loss of numerical_precision.
@@ -405,12 +408,14 @@ std::shared_ptr<const Derived> Basis<Derived>::transformed(
             quantum_numbers.data(), static_cast<Eigen::Index>(quantum_numbers.size()));
         Eigen::VectorX<real_t> val = probs * map;
         Eigen::VectorX<real_t> sq = probs * map.cwiseAbs2();
-        Eigen::VectorX<real_t> diff = (val.cwiseAbs2() - sq).cwiseAbs();
         transformed_quantum_numbers.resize(probs.rows());
 
         for (size_t i = 0; i < transformed_quantum_numbers.size(); ++i) {
-            if (diff[i] < numerical_precision) {
-                transformed_quantum_numbers[i] = std::round(val[i] * 2) / 2;
+            const real_t mean = val[i] / norm[i];
+            const real_t mean_sq = sq[i] / norm[i];
+            const real_t variance = std::abs(mean_sq - mean * mean);
+            if (variance < numerical_precision * std::max(static_cast<real_t>(1), mean_sq)) {
+                transformed_quantum_numbers[i] = std::round(mean * 2) / 2;
             } else {
                 transformed_quantum_numbers[i] = std::numeric_limits<real_t>::max();
             }
