@@ -77,6 +77,19 @@ find_package(spdlog REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+
+# On Windows, interpreters that are registered in the Windows registry take precedence over the interpreter of an
+# activated virtual environment. Because we discover the Intel oneAPI libraries through the Python environment (see
+# cmake/FindTBB.cmake and cmake/FindMKL.cmake), we have to invert this order unless the user chose an order.
+if(WIN32)
+  if(NOT DEFINED Python_FIND_REGISTRY)
+    set(Python_FIND_REGISTRY LAST)
+  endif()
+  if(NOT DEFINED Python3_FIND_REGISTRY)
+    set(Python3_FIND_REGISTRY LAST)
+  endif()
+endif()
+
 find_package(
   Python REQUIRED
   COMPONENTS Interpreter Development.Module NumPy
