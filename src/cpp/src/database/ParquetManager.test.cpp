@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 #include <duckdb.hpp>
 #include <filesystem>
+#include <fmt/format.h>
 #include <fstream>
 #include <miniz.h>
 #include <nlohmann/json.hpp>
@@ -69,8 +70,8 @@ private:
         nlohmann::json assets = nlohmann::json::array();
         for (const auto &key : keys) {
             nlohmann::json asset;
-            asset["name"] = key + "_v" + version + ".zip";
-            asset["url"] = "https://api.github.com/test/path/" + key + "_v" + version + ".zip";
+            asset["name"] = fmt::format("{}_v{}.zip", key, version);
+            asset["url"] = fmt::format("https://api.github.com/test/path/{}_v{}.zip", key, version);
             assets.push_back(asset);
         }
 

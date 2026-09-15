@@ -153,7 +153,9 @@ std::future<GitHubDownloader::Result> GitHubDownloader::download(const std::stri
                 // Defensive handling: if response is null and the error is unknown,
                 // treat this as a 304 Not Modified
                 if (response.error() == httplib::Error::Unknown) {
-                    return Result{304, "", "", {}};
+                    Result result;
+                    result.status_code = 304;
+                    return result;
                 }
                 throw std::runtime_error(fmt::format("Error downloading '{}': {}", remote_url,
                                                      httplib::to_string(response.error())));
