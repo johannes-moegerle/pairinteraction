@@ -87,11 +87,11 @@ GitHubDownloader::GitHubDownloader() : client(std::make_unique<httplib::SSLClien
 
 GitHubDownloader::~GitHubDownloader() = default;
 
-std::future<GitHubDownloader::Result>
-GitHubDownloader::download(const std::string &remote_url, const std::string &if_modified_since,
-                           bool use_octet_stream) const {
+std::future<GitHubDownloader::Result> GitHubDownloader::download(const std::string &remote_url,
+                                                                 const std::string &if_none_match,
+                                                                 bool use_octet_stream) const {
     return std::async(
-        std::launch::async, [this, remote_url, if_modified_since, use_octet_stream]() -> Result {
+        std::launch::async, [this, remote_url, if_none_match, use_octet_stream]() -> Result {
             SPDLOG_DEBUG("Downloading from GitHub: {}", remote_url);
 
             // Prepare headers
@@ -101,15 +101,15 @@ GitHubDownloader::download(const std::string &remote_url, const std::string &if_
                 {"Accept",
                  use_octet_stream ? "application/octet-stream" : "application/vnd.github+json"}};
 
-            if (!if_modified_since.empty()) {
-                headers.emplace("if-modified-since", if_modified_since);
+            if (!if_none_match.empty()) {
+                headers.emplace("if-none-match", if_none_match);
             }
 
             // Use the GitHub token if available; otherwise, if we have a conditional request,
             // insert a dummy authorization header to avoid increasing rate limits
             if (auto *token = std::getenv("GITHUB_TOKEN"); token) {
                 headers.emplace("Authorization", fmt::format("Bearer {}", token));
-            } else if (!if_modified_since.empty()) {
+            } else if (!if_none_match.empty()) {
                 headers.emplace("Authorization",
                                 "avoids-an-increase-in-ratelimits-used-if-304-is-returned");
             }
@@ -171,6 +171,9 @@ GitHubDownloader::download(const std::string &remote_url, const std::string &if_
             }
             if (response->has_header("last-modified")) {
                 result.last_modified = response->get_header_value("last-modified");
+            }
+            if (response->has_header("etag")) {
+                result.etag = response->get_header_value("etag");
             }
             result.body = use_octet_stream ? std::move(streamed_body) : response->body;
             result.status_code = response->status;

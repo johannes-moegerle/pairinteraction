@@ -80,9 +80,11 @@ private:
     };
 
     const std::string default_database_repo_host{"https://api.github.com"};
+    // We list the releases instead of only requesting the latest one so that we still find
+    // database tables if the latest release requires a newer version of the software
     const std::vector<std::string> default_database_repo_paths{
-        "/repos/pairinteraction/database-sqdt/releases/latest",
-        "/repos/pairinteraction/database-mqdt/releases/latest"};
+        "/repos/pairinteraction/database-sqdt/releases?per_page=100",
+        "/repos/pairinteraction/database-mqdt/releases?per_page=100"};
 
     bool download_missing_;
     bool use_cache_;

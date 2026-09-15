@@ -25,15 +25,17 @@ public:
         result.rate_limit.reset_time = 2147483647;
 
         if (remote_url == "/test/repo/path") {
-            // This is the repo path request, return JSON with assets
-            nlohmann::json assets = nlohmann::json::array();
-            nlohmann::json asset;
-            asset["name"] = "misc_v1.2.zip";
-            asset["url"] = "https://api.github.com/test/path/misc_v1.2.zip";
-            assets.push_back(asset);
-            nlohmann::json response;
-            response["assets"] = assets;
-            result.body = response.dump();
+            // This is a repo path request for a single release, return JSON with assets
+            result.body = make_release("1.2").dump();
+        } else if (remote_url == "/test/repo/releases") {
+            // This is a repo path request for a list of releases. The latest release requires a
+            // newer version of the software, the older ones do not. In addition, the oldest
+            // release contains an asset that is not provided anymore by newer releases.
+            nlohmann::json releases = nlohmann::json::array();
+            releases.push_back(make_release("2.0"));
+            releases.push_back(make_release("1.2"));
+            releases.push_back(make_release("1.1", {"misc", "retired"}));
+            result.body = releases.dump();
         } else if (remote_url == "/rate_limit") {
             // This is the rate limit request
             result.body = "";
@@ -58,6 +60,23 @@ public:
         }
 
         return std::async(std::launch::deferred, [result]() { return result; });
+    }
+
+private:
+    // Construct a release that provides the tables of the given version for the given assets
+    static nlohmann::json make_release(const std::string &version,
+                                       const std::vector<std::string> &keys = {"misc"}) {
+        nlohmann::json assets = nlohmann::json::array();
+        for (const auto &key : keys) {
+            nlohmann::json asset;
+            asset["name"] = key + "_v" + version + ".zip";
+            asset["url"] = "https://api.github.com/test/path/" + key + "_v" + version + ".zip";
+            assets.push_back(asset);
+        }
+
+        nlohmann::json release;
+        release["assets"] = assets;
+        return release;
     }
 };
 
@@ -108,6 +127,23 @@ TEST_CASE("ParquetManager functionality with mocked downloader") {
         CHECK(buffer.str() == "updated_file_content");
     }
 
+    SUBCASE("Check update table if the latest release is incompatible") {
+        std::vector<std::string> repo_paths = {"/test/repo/releases"};
+        ParquetManager manager(test_dir, downloader, repo_paths, con, false);
+        manager.scan_local();
+        manager.scan_remote();
+
+        // The latest compatible release must be used, not the latest release
+        std::string expected = (test_dir / "tables" / "misc_v1.2" / "wigner.parquet").string();
+        CHECK(manager.get_path("misc", "wigner") == expected);
+
+        // Assets that are only provided by older releases must not be used
+        CHECK_THROWS_WITH_AS(
+            manager.get_path("retired", "wigner"),
+            "No tables found for species 'retired'. Check the spelling of the species.",
+            std::runtime_error);
+    }
+
     std::filesystem::remove_all(test_dir);
 }
 
@@ -120,8 +156,9 @@ DOCTEST_TEST_CASE("ParquetManager functionality with GitHub downloader") {
     duckdb::DuckDB db(nullptr);
     duckdb::Connection con(db);
 
-    std::vector<std::string> repo_paths = {"/repos/pairinteraction/database-sqdt/releases/latest",
-                                           "/repos/pairinteraction/database-mqdt/releases/latest"};
+    std::vector<std::string> repo_paths = {
+        "/repos/pairinteraction/database-sqdt/releases?per_page=100",
+        "/repos/pairinteraction/database-mqdt/releases?per_page=100"};
     ParquetManager manager(Database::get_global_instance().get_database_dir(), downloader,
                            repo_paths, con, Database::get_global_instance().get_use_cache());
     manager.scan_local();
