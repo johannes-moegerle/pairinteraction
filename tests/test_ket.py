@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+import numpy as np
 import pytest
 from pairinteraction.units import ureg
 
@@ -65,6 +66,34 @@ def test_get_label_mqdt(pi_module: PairinteractionModule) -> None:
     assert ket2.get_label("raw") == "Yb171:S=1.0,nu=55.1,L=1.0,F=5/2,5/2"
     ket3 = pi_module.KetAtom("Yb174_mqdt", nu=60, l=1, f=1, m=1)
     assert ket3.get_label("raw") == "Yb174:S=0.0,nu=60.0,L=1.0,J=1,1"
+
+
+def test_get_coupling_scheme_std(pi_module: PairinteractionModule) -> None:
+    coupling_schemes: list[Literal["LS", "JJ", "FJ"]] = ["LS", "JJ", "FJ"]
+
+    # For SQDT all quantum numbers are exact, thus all coupling schemes describe the state perfectly
+    ket_sqdt = pi_module.KetAtom("Rb", n=60, l=1, j=1.5, m=0.5)
+    for coupling_scheme in coupling_schemes:
+        assert ket_sqdt.get_coupling_scheme_std(coupling_scheme) == 0
+
+    # Yb174 has no nuclear spin, so the state is best described by the LS coupling scheme
+    ket_mqdt = pi_module.KetAtom("Yb174_mqdt", nu=60, l=1, f=1, m=1)
+    stds = {cs: ket_mqdt.get_coupling_scheme_std(cs) for cs in coupling_schemes}
+    assert min(stds, key=lambda cs: stds[cs]) == "LS"
+    # the combined standard deviation is the square root of the sum of the variances
+    assert pytest.approx(stds["LS"]) == np.sqrt(  # NOSONAR
+        sum(ket_mqdt.get_quantum_number_std(qn) ** 2 for qn in ["s", "l", "j"])
+    )
+
+    # For a high lying state of Yb171 the hyperfine structure of the ionic core is resolved,
+    # thus the fj coupling scheme describes the state best
+    ket_hyperfine = pi_module.KetAtom("Yb171_mqdt", nu=60, l=0, f=0.5, m=0.5)
+    stds = {cs: ket_hyperfine.get_coupling_scheme_std(cs) for cs in coupling_schemes}
+    assert min(stds, key=lambda cs: stds[cs]) == "FJ"
+    assert stds["FJ"] > 0
+
+    with pytest.raises(ValueError, match="Unknown coupling_scheme"):
+        ket_sqdt.get_coupling_scheme_std("LSJ")  # type: ignore [arg-type]
 
 
 def test_ket_equal(pi_module: PairinteractionModule) -> None:

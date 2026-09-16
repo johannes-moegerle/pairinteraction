@@ -40,6 +40,13 @@ Parity = Literal["even", "odd"]
 _ParityToCPP: dict[Parity, _backend.Parity] = {"even": _backend.Parity.EVEN, "odd": _backend.Parity.ODD}
 _ParityToInt: dict[Parity, int] = {"even": 1, "odd": -1}
 
+CouplingScheme = Literal["LS", "JJ", "FJ"]
+QuantumNumbersOfCouplingScheme: dict[CouplingScheme, tuple[str, ...]] = {
+    "LS": ("s", "l", "j"),
+    "JJ": ("j_core", "j_ryd", "j"),
+    "FJ": ("j_core", "f_core", "j_ryd"),
+}
+
 
 def get_cpp_float_type(float_type: FloatType) -> _backend.FloatType:
     """Convert a python FloatType string to a cpp FloatType enum."""

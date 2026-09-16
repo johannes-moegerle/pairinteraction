@@ -11,7 +11,13 @@ from scipy.special import exprel
 
 from pairinteraction import _backend
 from pairinteraction.database import Database
-from pairinteraction.enums import OperatorType, Parity, int_to_parity, parity_to_int
+from pairinteraction.enums import (
+    OperatorType,
+    Parity,
+    QuantumNumbersOfCouplingScheme,
+    int_to_parity,
+    parity_to_int,
+)
 from pairinteraction.ket.ket_base import KetBase
 from pairinteraction.ket.utils import format_half_integer, get_l_label
 from pairinteraction.units import QuantityArray, QuantityScalar, ureg
@@ -19,7 +25,7 @@ from pairinteraction.units import QuantityArray, QuantityScalar, ureg
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from pairinteraction.enums import OperatorType, Parity
+    from pairinteraction.enums import CouplingScheme, OperatorType, Parity
     from pairinteraction.state import StateAtom, StateAtomReal
     from pairinteraction.units import NDArray, PintArray, PintComplex, PintFloat
 
@@ -63,6 +69,8 @@ class KetAtom(KetBase):
         FJ coupling of the hyperfine structure of the ionic core: f_core.
         Each of these has a companion attribute with a "_std" suffix holding its standard deviation,
         which is zero for quantum numbers that are exact.
+        How well a state is described by one of the coupling schemes can be quantified
+        with :meth:`get_coupling_scheme_std`.
 
     Examples:
         >>> import pairinteraction as pi
@@ -229,6 +237,45 @@ class KetAtom(KetBase):
 
         """
         return self._cpp.get_quantum_number_std(name)
+
+    def get_coupling_scheme_std(self, coupling_scheme: CouplingScheme) -> float:
+        r"""Return the combined standard deviation of the quantum numbers of a coupling scheme.
+
+        The quantum numbers, which are specific to a coupling scheme, are
+
+        - "LS": s, l, j,
+        - "JJ": j_core, j_ryd, j,
+        - "FJ": j_core, f_core, j_ryd.
+
+        Their standard deviations are combined to a single value by adding the variances,
+        :math:`\sigma = \sqrt{\sum_X \sigma_X^2}`.
+        A value of zero means that all quantum numbers of the coupling scheme are exact,
+        i.e. that the state is perfectly described by this coupling scheme.
+        Comparing the values of the different coupling schemes thus tells,
+        which coupling scheme labels the state best.
+
+        Args:
+            coupling_scheme: The coupling scheme, i.e. one of "LS", "JJ" or "FJ".
+
+        Returns:
+            The combined standard deviation of the quantum numbers of the coupling scheme.
+
+        Examples:
+            >>> import pairinteraction as pi
+            >>> ket = pi.KetAtom("Yb174_mqdt", nu=60, l=1, f=1, m=1)
+            >>> {cs: round(ket.get_coupling_scheme_std(cs), 3) for cs in ["LS", "JJ", "FJ"]}
+            {'LS': 0.192, 'JJ': 0.371, 'FJ': 0.371}
+            >>> min(["LS", "JJ", "FJ"], key=ket.get_coupling_scheme_std)
+            'LS'
+
+        """
+        if coupling_scheme not in QuantumNumbersOfCouplingScheme:
+            raise ValueError(
+                f"Unknown coupling_scheme '{coupling_scheme}', should be one of {list(QuantumNumbersOfCouplingScheme)}"
+            )
+        names = QuantumNumbersOfCouplingScheme[coupling_scheme]
+        variance = sum(self.get_quantum_number_std(name) ** 2 for name in names)
+        return float(np.sqrt(variance))
 
     @property
     def m(self) -> float:
