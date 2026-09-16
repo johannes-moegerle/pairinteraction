@@ -35,6 +35,7 @@ lifetimes to calculations of pair potentials.
     examples_python/pair_potentials.ipynb
     examples_python/lifetimes.ipynb
     examples_python/state_atom_object.ipynb
+    examples_python/mqdt_labeling.ipynb
 
 Some examples showcasing how to calculate C3 and C6 coefficients and effective Hamiltonians
 
