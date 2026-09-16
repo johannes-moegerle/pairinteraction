@@ -23,7 +23,7 @@ except PackageNotFoundError:
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   if(NOT ONEAPI_RESULT EQUAL 0)
-    message(STATUS "Failed to find Intel oneAPI libraries using Python.")
+    message(STATUS "Failed to find the 'tbb-devel' Python package using ${Python3_EXECUTABLE}.")
   else()
     string(REPLACE "|" ";" ONEAPI_PATHS_LIST "${ONEAPI_PATHS}")
     list(GET ONEAPI_PATHS_LIST 0 TBB_ROOT)
@@ -37,4 +37,10 @@ else()
   message(STATUS "Python3 interpreter not found; skip discovering Intel oneAPI libraries.")
 endif()
 
-find_package(TBB REQUIRED CONFIG)
+find_package(TBB QUIET CONFIG)
+
+find_package_handle_standard_args(
+  TBB CONFIG_MODE
+  REASON_FAILURE_MESSAGE
+    "TBB is obtained from the 'tbb-devel' Python package. Install the build requirements into the Python environment \
+that CMake uses (${Python3_EXECUTABLE}) by running 'pip install -r .build_requirements.txt'.")
