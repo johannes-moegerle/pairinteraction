@@ -3,14 +3,21 @@
 
 include(FindPackageHandleStandardArgs)
 
-find_package(
-  Python3
-  COMPONENTS Interpreter
-  QUIET)
-if(Python3_FOUND)
+# Prefer the interpreter that has already been found by the top-level project so that all dependencies that are
+# obtained from Python packages are taken from the same Python environment
+if(Python_EXECUTABLE)
+  set(ONEAPI_PYTHON "${Python_EXECUTABLE}")
+else()
+  find_package(
+    Python3
+    COMPONENTS Interpreter
+    QUIET)
+  set(ONEAPI_PYTHON "${Python3_EXECUTABLE}")
+endif()
+if(ONEAPI_PYTHON)
   execute_process(
     COMMAND
-      ${Python3_EXECUTABLE} -c "import sys
+      ${ONEAPI_PYTHON} -c "import sys
 from importlib.metadata import files, PackageNotFoundError
 try:
     tbb_config_path = next(p for p in files('tbb-devel') if 'TBBConfig.cmake' in p.name).locate().resolve()
@@ -23,18 +30,20 @@ except PackageNotFoundError:
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   if(NOT ONEAPI_RESULT EQUAL 0)
-    message(STATUS "Failed to find the 'tbb-devel' Python package using ${Python3_EXECUTABLE}.")
+    message(STATUS "Failed to find the 'tbb-devel' Python package using ${ONEAPI_PYTHON}.")
   else()
     string(REPLACE "|" ";" ONEAPI_PATHS_LIST "${ONEAPI_PATHS}")
     list(GET ONEAPI_PATHS_LIST 0 TBB_ROOT)
     list(GET ONEAPI_PATHS_LIST 1 TBB_CONFIG_FILE)
+    cmake_path(SET TBB_ROOT NORMALIZE "${TBB_ROOT}")
+    cmake_path(SET TBB_CONFIG_FILE NORMALIZE "${TBB_CONFIG_FILE}")
     get_filename_component(TBB_DIR "${TBB_CONFIG_FILE}" DIRECTORY)
     message(STATUS "TBB root determined to be: ${TBB_ROOT}")
     message(STATUS "TBB package config directory determined to be: ${TBB_DIR}")
     list(APPEND CMAKE_PREFIX_PATH "${TBB_DIR}")
   endif()
 else()
-  message(STATUS "Python3 interpreter not found; skip discovering Intel oneAPI libraries.")
+  message(STATUS "Python interpreter not found; skip discovering Intel oneAPI libraries.")
 endif()
 
 find_package(TBB QUIET CONFIG)
@@ -43,4 +52,4 @@ find_package_handle_standard_args(
   TBB CONFIG_MODE
   REASON_FAILURE_MESSAGE
     "TBB is obtained from the 'tbb-devel' Python package. Install the build requirements into the Python environment \
-that CMake uses (${Python3_EXECUTABLE}) by running 'pip install -r .build_requirements.txt'.")
+that CMake uses (${ONEAPI_PYTHON}) by running 'pip install -r .build_requirements.txt'.")

@@ -7,14 +7,21 @@ if(MKL_THREADING STREQUAL "tbb_thread")
   find_package(TBB REQUIRED)
 endif()
 
-find_package(
-  Python3
-  COMPONENTS Interpreter
-  QUIET)
-if(Python3_FOUND)
+# Prefer the interpreter that has already been found by the top-level project so that all dependencies that are
+# obtained from Python packages are taken from the same Python environment
+if(Python_EXECUTABLE)
+  set(ONEAPI_PYTHON "${Python_EXECUTABLE}")
+else()
+  find_package(
+    Python3
+    COMPONENTS Interpreter
+    QUIET)
+  set(ONEAPI_PYTHON "${Python3_EXECUTABLE}")
+endif()
+if(ONEAPI_PYTHON)
   execute_process(
     COMMAND
-      ${Python3_EXECUTABLE} -c "import sys
+      ${ONEAPI_PYTHON} -c "import sys
 from importlib.metadata import files, PackageNotFoundError
 try:
     mkl_config_path = next(p for p in files('mkl-devel') if 'MKLConfig.cmake' in p.name).locate().resolve()
@@ -27,18 +34,20 @@ except PackageNotFoundError:
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   if(NOT ONEAPI_RESULT EQUAL 0)
-    message(STATUS "Failed to find the 'mkl-devel' Python package using ${Python3_EXECUTABLE}.")
+    message(STATUS "Failed to find the 'mkl-devel' Python package using ${ONEAPI_PYTHON}.")
   else()
     string(REPLACE "|" ";" ONEAPI_PATHS_LIST "${ONEAPI_PATHS}")
     list(GET ONEAPI_PATHS_LIST 0 MKL_ROOT)
     list(GET ONEAPI_PATHS_LIST 1 MKL_CONFIG_FILE)
+    cmake_path(SET MKL_ROOT NORMALIZE "${MKL_ROOT}")
+    cmake_path(SET MKL_CONFIG_FILE NORMALIZE "${MKL_CONFIG_FILE}")
     get_filename_component(MKL_DIR "${MKL_CONFIG_FILE}" DIRECTORY)
     message(STATUS "MKL root determined to be: ${MKL_ROOT}")
     message(STATUS "MKL package config directory determined to be: ${MKL_DIR}")
     list(APPEND CMAKE_PREFIX_PATH "${MKL_DIR}")
   endif()
 else()
-  message(STATUS "Python3 interpreter not found; skip discovering Intel oneAPI libraries.")
+  message(STATUS "Python interpreter not found; skip discovering Intel oneAPI libraries.")
 endif()
 
 find_package(MKL QUIET CONFIG)
@@ -79,7 +88,7 @@ else()
     VERSION_VAR MKL_VERSION
     REASON_FAILURE_MESSAGE
       "MKL is obtained from the 'mkl-devel' Python package. To use MKL, install the build requirements into the Python \
-environment that CMake uses (${Python3_EXECUTABLE}) by running 'pip install -r .build_requirements.txt'. Otherwise, \
+environment that CMake uses (${ONEAPI_PYTHON}) by running 'pip install -r .build_requirements.txt'. Otherwise, \
 LAPACKE is used instead of MKL.")
 
   if(MKL_FOUND)
