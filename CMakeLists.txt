@@ -123,12 +123,35 @@ if(NOT MKL_FOUND)
   find_package(LAPACKE)
 endif()
 
-# Find nanobind
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  OUTPUT_VARIABLE NB_DIR)
-list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+# Find nanobind. Like TBB and MKL, nanobind is obtained from a Python package, so we ask the Python interpreter that
+# CMake uses where the package config file is located. The discovery can be overwritten by passing -Dnanobind_DIR=<dir>.
+# The located directory is cached by find_package, so we discover it again if the Python interpreter changed.
+if(DEFINED CACHE{NANOBIND_PYTHON_EXECUTABLE} AND NOT NANOBIND_PYTHON_EXECUTABLE STREQUAL Python_EXECUTABLE)
+  unset(nanobind_DIR CACHE)
+endif()
+set(NANOBIND_PYTHON_EXECUTABLE
+    "${Python_EXECUTABLE}"
+    CACHE INTERNAL "Python interpreter that was used to locate nanobind")
+if(NOT IS_DIRECTORY "${nanobind_DIR}")
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    RESULT_VARIABLE NANOBIND_RESULT
+    OUTPUT_VARIABLE NANOBIND_DIR
+    ERROR_VARIABLE NANOBIND_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
+  if(NOT NANOBIND_RESULT EQUAL 0)
+    message(
+      FATAL_ERROR
+        "Failed to import nanobind using ${Python_EXECUTABLE}: ${NANOBIND_ERROR}\n\
+nanobind is obtained from the 'nanobind' Python package. Install the build requirements into the Python environment \
+that CMake uses by running 'pip install -r .build_requirements.txt'. If CMake uses the wrong Python interpreter, \
+activate the desired Python environment or pass -DPython_EXECUTABLE=<path to the python executable> to CMake, and \
+configure the build in a fresh build directory (the interpreter is cached).")
+  endif()
+  # The interpreter prints a native path, on Windows it contains backslashes that CMake cannot handle reliably
+  cmake_path(SET nanobind_DIR NORMALIZE "${NANOBIND_DIR}")
+endif()
+message(STATUS "nanobind package config directory determined to be: ${nanobind_DIR}")
 find_package(nanobind CONFIG REQUIRED)
 
 # Find duckdb  # keep the version used here in sync with pyproject.toml
