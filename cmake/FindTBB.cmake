@@ -3,6 +3,12 @@
 
 include(FindPackageHandleStandardArgs)
 
+# FindMKL calls find_package(TBB) again when MKL uses TBB for threading, skip the discovery in this case
+if(TARGET TBB::tbb)
+  set(TBB_FOUND TRUE)
+  return()
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/OneAPIFromPython.cmake")
 oneapi_from_python(TBB tbb-devel TBBConfig.cmake tbb tbb)
 
