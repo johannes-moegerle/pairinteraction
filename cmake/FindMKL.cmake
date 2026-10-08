@@ -47,9 +47,7 @@ else()
     REQUIRED_VARS MKL_FOUND
     VERSION_VAR MKL_VERSION
     REASON_FAILURE_MESSAGE
-      "MKL is obtained from the 'mkl-devel' Python package. To use MKL, install the build requirements into the Python \
-environment that CMake uses (${ONEAPI_PYTHON}) by running 'pip install -r .build_requirements.txt'. Otherwise, \
-LAPACKE is used instead of MKL.")
+      "MKL is obtained from the 'mkl-devel' Python package, LAPACKE is used if MKL is not found. ${ONEAPI_PYTHON_HINT}")
 
   if(MKL_FOUND)
     add_library(MKL::MKL ALIAS PkgConfig::MKL)
