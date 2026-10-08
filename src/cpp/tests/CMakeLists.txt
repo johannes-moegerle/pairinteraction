@@ -54,7 +54,7 @@ endif()
 if(NOT EXISTS "${CERTIFI_CA_BUNDLE_PATH}")
     message(FATAL_ERROR "certifi CA bundle does not exist at ${CERTIFI_CA_BUNDLE_PATH}")
 endif()
-file(TO_CMAKE_PATH "${CERTIFI_CA_BUNDLE_PATH}" CERTIFI_CA_BUNDLE_PATH)
+cmake_path(SET CERTIFI_CA_BUNDLE_PATH NORMALIZE "${CERTIFI_CA_BUNDLE_PATH}")
 
 # Add test executables
 add_test_executable(unit_tests unit_tests.cpp ${NPROC})
