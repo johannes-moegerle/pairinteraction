@@ -31,7 +31,7 @@ def plot_pair_potential(
 
     Args:
         system_pairs: A sequence of SystemPair objects to plot.
-        ket_pair_of_interest: The KetPair (or tuple of KetAtom) for whicht the overlaps will be plotted.
+        ket_pair_of_interest: The KetPair (or tuple of KetAtom) for which the overlaps will be plotted.
         ax: An optional matplotlib Axes object to plot on.
             If None, a new figure and axes will be created.
 
@@ -59,15 +59,15 @@ def plot_pair_potential(
     ax.plot(distances, np.array(eigenenergies), c="k", lw=lw / 6, zorder=-10)
 
     x_repeated = np.hstack([val * np.ones_like(es) for val, es in zip(distances, eigenenergies, strict=True)])
-    energies_flattend = np.hstack(eigenenergies)
-    overlaps_flattend = np.hstack(overlaps)
-    sorter = np.argsort(overlaps_flattend)
+    energies_flattened = np.hstack(eigenenergies)
+    overlaps_flattened = np.hstack(overlaps)
+    sorter = np.argsort(overlaps_flattened)
 
     ms = mpl.rcParams["lines.markersize"]
     scat = ax.scatter(
         x_repeated[sorter],
-        energies_flattend[sorter],
-        c=overlaps_flattend[sorter],
+        energies_flattened[sorter],
+        c=overlaps_flattened[sorter],
         s=ms * 2.5,
         vmin=0,
         vmax=1,
