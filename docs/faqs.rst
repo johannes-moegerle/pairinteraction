@@ -32,10 +32,7 @@ There are several ways to speed up calculations:
 
   .. code-block:: python
 
-      systems = [
-          pi.SystemPair(basis).set_distance_vector([0, 0, d], unit="micrometer")
-          for d in distances
-      ]
+      systems = [pi.SystemPair(basis).set_distance(d, unit="micrometer") for d in distances]
       pi.diagonalize(systems)
 
 - Pick the ``lapacke_evr`` diagonalization method and restrict the eigenenergies to a tight energy window.
