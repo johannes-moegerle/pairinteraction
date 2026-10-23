@@ -20,9 +20,8 @@ Build tools
     - `Visual Studio`_ or MinGW_ as a compiler. We recommend `Visual Studio`_ and will use it in further descriptions.
 
 You can use VCPKG with :github:`our configuration file <tree/master/vcpkg.json>` to install most C++ dependencies.
-Further dependencies such as `Intel oneAPI MKL`_ and `Intel oneAPI TBB`_ can be found in the :github:`github workflow
-<tree/master/.github/workflows/cpp-backend.yml>` and :github:`actions folder <tree/master/.github/actions>` of the
-PairInteraction repository.
+`Intel oneAPI MKL`_ and `Intel oneAPI TBB`_ are installed as Python packages together with the :ref:`Python build
+dependencies <python_setup>`.
 
 In addition, you need to adjust your path environment variable if you want to use certain tools from the command line.
 In order to smoothly run all the commands described on this page, add the following paths to your path environment
@@ -87,8 +86,6 @@ Dockerfiles are located in the :github:`docker branch <tree/docker/docker>`.
 
 .. _intel oneapi tbb: https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb-download.html
 
-.. _intel repository: https://www.intel.com/content/www/us/en/docs/oneapi/installation-guide-linux/2023-0/apt.html
-
 .. _mingw: https://www.mingw-w64.org/downloads/
 
 .. _vcpkg: https://github.com/microsoft/vcpkg?tab=readme-ov-file#quick-start-windows
@@ -101,14 +98,13 @@ Dockerfiles are located in the :github:`docker branch <tree/docker/docker>`.
 
 .. note::
 
-    `Intel oneAPI MKL`_ is an optional dependency that provides optimized linear algebra routines and the FEAST
-    eigensolver. If this dependency is available, it is important that a compatible version of `Intel oneAPI TBB`_ is
-    available as well. For example, on Debian, the package ``intel-oneapi-mkl-devel-2023.1.0`` and
-    ``intel-oneapi-tbb-devel-2021.13`` are compatible that can be installed using APT from the `Intel repository`_. To
-    allow the build system to find these oneAPI libraries, one has to set the ``CMAKE_PREFIX_PATH`` and
-    ``LD_LIBRARY_PATH`` environment variables. To do so, the libraries provide scripts that can be sourced before
-    running CMake. On Debian, ``source /opt/intel/oneapi/mkl/latest/env/vars.sh`` and ``source
-    /opt/intel/oneapi/tbb/latest/env/vars.sh`` will set the environment variables.
+    `Intel oneAPI TBB`_ is a required dependency. `Intel oneAPI MKL`_ is an optional dependency that provides optimized
+    linear algebra routines and the FEAST eigensolver. Without MKL, the build system uses LAPACKE if it is found, and
+    otherwise only the Eigen diagonalizer is available. On Linux and Windows, both libraries are installed as Python
+    packages (``tbb-devel`` and ``mkl-devel``) together with the Python build dependencies from
+    ``.build_requirements.txt``. As long as the Python environment containing these packages is activated, CMake finds
+    the libraries automatically and you do not need to set any environment variables. On macOS, MKL is not used and TBB
+    is installed via Homebrew, see the :github:`GitHub workflow <tree/master/.github/workflows/cpp-backend.yml>`.
 
 .. note::
 

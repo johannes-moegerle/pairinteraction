@@ -10,9 +10,9 @@
 
 If you want to build only the C++ part and want to have more control over the build process, you can manually run the
 tasks that have been automatically executed by pip_ in the :ref:`automatic build <automatic>`. For this, you have to
-first install the Python build dependencies for your :ref:`Python environment <python_setup>` manually.
-
-If you want to use mkl you should also run ``pip install mkl mkl-devel``.
+first install the Python build dependencies for your :ref:`Python environment <python_setup>` manually. These include
+MKL and TBB, which CMake finds automatically if the Python environment is activated. On macOS, they are not included:
+MKL is not used, and TBB has to be installed via Homebrew (see :ref:`system_setup`).
 
 You can then build the software with standard CMake commands:
 
