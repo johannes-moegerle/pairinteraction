@@ -44,13 +44,13 @@ software, only the default target for building the library is executed. In the f
 targets is provided. Note that some targets require specific build options to be enabled in addition to the default
 options, and have varying names depending on the platform.
 
-================ ====================== ==================================================================== ===========
-Target (Windows) Target (OS X and Unix) Task                                                                 Requirement
-================ ====================== ==================================================================== ===========
-``ALL_BUILD``    ``all``                Build the software (default target)
-``RUN_TESTS``    ``test``               Run the C++ tests (without any Python tests, use the automatic build
-                                        above for this)
-================ ====================== ==================================================================== ===========
+================ ======================= ============================================================== ===========
+Target (Windows) Target (macOS and Unix) Task                                                           Requirement
+================ ======================= ============================================================== ===========
+``ALL_BUILD``    ``all``                 Build the software (default target)
+``RUN_TESTS``    ``test``                Run the C++ tests (without any Python tests, use the automatic
+                                         build above for this)
+================ ======================= ============================================================== ===========
 
 .. note::
 
@@ -89,9 +89,9 @@ speed up the compilation process significantly.
 
 **1. Compiler Optimizations**
 
-To speed up the software, you can pass optimization flags to the compiler by setting the `CXXFLAGS` environment variable
-before running CMake. For example, the following bash command sets the environment variable under GNU/Linux, enabling
-several optimizations at once for the gcc compiler:
+To speed up the software, you can pass optimization flags to the compiler by setting the ``CXXFLAGS`` environment
+variable before running CMake. For example, the following bash command sets the environment variable under GNU/Linux,
+enabling several optimizations at once for the gcc compiler:
 
 .. code-block:: bash
 
@@ -106,7 +106,7 @@ in the PowerShell:
 
 **2. Using a Faster Build System**
 
-Under GNU/Linux, you can use the `ninja` build system and the `mold` linker to reduce the build time by a factor of
+Under GNU/Linux, you can use the ``ninja`` build system and the ``mold`` linker to reduce the build time by a factor of
 about 1.5. These tools are typically available in the package repositories of your distribution. For example, on Ubuntu,
 you can install them by running:
 
@@ -125,7 +125,7 @@ directory. Note that ninja uses all available processors by default.
 **3. Using Compiler Caching**
 
 If you delete the build directory because you want to compile a different branch of PairInteraction or use different
-build options, the compilation has to start from scratch - as long as you do not use a compiler cache like `ccache`.
+build options, the compilation has to start from scratch - as long as you do not use a compiler cache like ``ccache``.
 Using this tool has the additional advantage that adding comments to the source code does not trigger a recompilation.
 It can be installed on many operating systems, e.g., on Ubuntu by running:
 
@@ -150,11 +150,11 @@ running the following commands within the build directory:
 However, before pushing your changes, you should always run the full test suite to ensure that your changes do not break
 other parts of the software. The ``--config Release`` and ``-C Release`` options tell the tools to build and test the
 release version of the software if a multi-configuration generator is used. For further explanations on the build type,
-see the next section.
+see the note on configurations above.
 
 **5. Improve the Code Quality with Clang-Tidy and Include-What-You-Use**
 
-Our continues integration system uses the C++ linter tool `clang-tidy` to check the code quality of pull requests and
+Our continuous integration system uses the C++ linter tool ``clang-tidy`` to check the code quality of pull requests and
 find programming errors. If you have the clang compiler installed, you can run it by yourself during compilation by
 building the software with the following commands:
 
@@ -163,7 +163,7 @@ building the software with the following commands:
     cmake -DCMAKE_CXX_COMPILER="clang++" -DCMAKE_CXX_CLANG_TIDY="clang-tidy" ..
     cmake --build .
 
-In addition, it is recommended to use the `include-what-you-use` tool to find unnecessary includes in your code. While
+In addition, it is recommended to use the ``include-what-you-use`` tool to find unnecessary includes in your code. While
 the tool is not perfect, its suggestions can help to reduce the compilation time. If the tool is installed on your
 system, you can run it during compilation by executing the following commands:
 
@@ -174,15 +174,14 @@ system, you can run it during compilation by executing the following commands:
 
 **6. Changing the log level**
 
-We use the spdlog_ library for logging. The log level can be set by the environment variable `SPDLOG_LEVEL`. Possible
-values are `info` (the default), `debug`, `warn`, and `error`.
+We use the spdlog_ library for logging. The log level can be set by the environment variable ``SPDLOG_LEVEL``. Possible
+values are ``info`` (the default), ``debug``, ``warn``, and ``error``.
 
 .. _spdlog: https://github.com/gabime/spdlog/
 
 **7. Debugging with GDB**
 
-For tracking down errors like segmentation faults, running a debug build with the GNU Debugger `GDB` can be very
-helpful.
+For tracking down errors like segmentation faults, running a debug build with the GNU Debugger GDB can be very helpful.
 
 If CMake uses a multi-configuration generator (e.g., Ninja Multi-Config, Visual Studio Generators), you can build the
 software with debug symbols by using the ``--config Debug`` option. Afterwards, you can execute the build with GDB. For
@@ -240,7 +239,7 @@ Debugging with multiple threads
 Breakpoints and stepping
 ======================== ===========================================================
 ``b FUNCTIONNAME``       Set breakpoint at FUNCTIONNAME
-``delete FUNCTIONNAME``  Delete breakpoint at FUNCTIONNAME
+``clear FUNCTIONNAME``   Delete breakpoints at FUNCTIONNAME
 ``c``                    Continue executing the program until the next breakpoint
 ``n``                    Execute next source-code line, stepping over function calls
 ``s``                    Execute next source-code line, stepping into function calls

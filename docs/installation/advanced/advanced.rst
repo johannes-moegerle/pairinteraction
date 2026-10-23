@@ -20,17 +20,17 @@ For building from source we offer two different setups:
     dependencies manually. Recommended for adjusting only the Python code.
 
     :ref:`manual` - This build method allows to manually build both the C++ and the Python backend. It allows to compile
-    specific parts of the code only, define test targets, and others. Recommend for adjusting both the C++ and the
+    specific parts of the code only, define test targets, and others. Recommended for adjusting both the C++ and the
     Python code.
 
 As building from source depends on your operating system, you will need to prepare different tools for your development
 environment, including a Python package manager.
 
 You will find detailed instructions about how to set up your development environment here:
-    :ref:`python_setup` - Get instructions on different Python package management systems, and how to setup a virtual
+    :ref:`python_setup` - Get instructions on different Python package management systems, and how to set up a virtual
     environment for development
 
-    :ref:`system_setup` - Get instructions on the tooling chain to build the C++ backend via the :ref:`automatic
+    :ref:`system_setup` - Get instructions on the toolchain to build the C++ backend via the :ref:`automatic
     <automatic>` or :ref:`manual <manual>` build.
 
 Building from source allows also to build only the documentation. This is especially useful if you only want to document

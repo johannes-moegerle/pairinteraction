@@ -18,7 +18,7 @@ Reporting Issues
 
 Contributing New Quantum Defects
     Precise quantum defects are crucial for our software's accuracy. We particularly seek improvements for species with
-    two-valence electrons, where data remains sparse. If you've conducted research that provides new quantum defects,
+    two valence electrons, where data remains sparse. If you've conducted research that provides new quantum defects,
     sharing your data would significantly benefit the community. To ensure that your research receives appropriate
     recognition, our :doc:`README <../index>` promotes the citation of publications that have contributed quantum
     defects.
@@ -85,7 +85,7 @@ necessary steps:
   If you are using GNU/Linux, instructions for installing dependencies with ``apt`` / ``yum`` / ``zypper`` can be found
   in the Dockerfiles that are located in the :github:`docker branch <tree/docker/docker>`.
 
-  If you are using OS X, take a look at the ``brew install`` instructions in :github:`our GitHub workflow
+  If you are using macOS, take a look at the ``brew install`` instructions in :github:`our GitHub workflow
   <tree/master/.github/workflows/cpp-backend.yml>`.
 
   If you are using Windows, you can use ``vcpkg`` to manage the dependencies. To set up vcpkg execute the following
@@ -139,8 +139,8 @@ execute:
 3. Implement, Test, and Document Your Changes
 =============================================
 
-After applying your changes, run our test cases to ensure that the software is still working. If built the software via
-``pip``, make sure your virtual environment is activated, then run:
+After applying your changes, run our test cases to ensure that the software is still working. If you built the software
+via ``pip``, make sure your virtual environment is activated, then run:
 
 .. code-block:: bash
 
@@ -149,7 +149,7 @@ After applying your changes, run our test cases to ensure that the software is s
 To run the tests using full database tables downloaded from the internet, execute ``pytest --download-missing
 --database-dir ""``.
 
-If built the software with ``cmake``, execute the command below in your build directory to run all C++ tests:
+If you built the software with ``cmake``, execute the command below in your build directory to run all C++ tests:
 
 .. code-block:: bash
 

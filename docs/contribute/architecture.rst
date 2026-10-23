@@ -17,7 +17,7 @@ PairInteraction repository:
   Hamiltonians of systems of Rydberg atoms. Python bindings are created using nanobind_.
 - :github:`src/pairinteraction <tree/master/src/pairinteraction>` - A Python library that wraps the Python bindings,
   providing a Python interface for easily accessing the functionality in a pythonic way. Moreover, the Python library
-  adds functionality like the perturbative calculation of dispersion coefficients and effective Hamiltonians. The python
+  adds functionality like the perturbative calculation of dispersion coefficients and effective Hamiltonians. The Python
   classes like ``pairinteraction.BasisAtom`` and ``pairinteraction.SystemAtom`` are defined for the general case of
   complex-valued data types (and thus also use the complex C++ bindings). To use only real-valued data types (which can
   accelerate the calculations) one can use the classes from the ``pairinteraction.real`` submodule, e.g.
@@ -59,8 +59,10 @@ basis, ensuring that only matrix elements are constructed that belong to pair st
 3. Diagonalizing the Hamiltonian
 ================================
 
-The Hamiltonian is diagonalized using Intel's MKL library. If multiple Hamiltonians have been constructed, for example,
-for different interatomic distances, they can be diagonalized in parallel by passing a list of Hamiltonians to the
-diagonalization routine. The parallelization is done in C++, circumventing the global interpreter lock of Python.
+By default, the Hamiltonian is diagonalized using the Eigen library. Alternatively, LAPACKE routines (provided by
+Intel's MKL library if available) or MKL's FEAST eigensolver can be used. If multiple Hamiltonians have been
+constructed, for example, for different interatomic distances, they can be diagonalized in parallel by passing a list of
+Hamiltonians to the diagonalization routine. The parallelization is done in C++, circumventing the global interpreter
+lock of Python.
 
 .. _nanobind: https://github.com/wjakob/nanobind

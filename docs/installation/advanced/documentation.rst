@@ -6,13 +6,18 @@
 
 For building the documentation, we are using Sphinx_. In order to build the documentation, you first need to set up your
 :ref:`development environment <system_setup>` and create a :ref:`Python environment <python_setup>`. If not stated
-otherwise, all commands described are run from the `docs` folder of the PairInteraction repository.
+otherwise, all commands described are run from the ``docs`` folder of the PairInteraction repository.
 
-In order to install all dependencies to smoothly run Sphinx_, you should first run
+In order to install all dependencies to smoothly run Sphinx_, you should first run from the root directory of the
+repository
 
 .. code-block:: bash
 
-    pip install . --group docs
+    pip install --group docs
+
+This requires pip >= 25.1 and assumes that you have already installed PairInteraction via the :ref:`automatic build
+<automatic>`. Otherwise, run ``pip install -e . --group docs`` instead to build and install it together with the
+documentation dependencies.
 
 In order to build the documentation once, you can run
 

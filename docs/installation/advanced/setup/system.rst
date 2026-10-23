@@ -4,7 +4,7 @@
  Setup of the Development Environment
 ######################################
 
-This section described how to set up your system for a :ref:`manual build <manual>` of the C++ backend from source. This
+This section describes how to set up your system for a :ref:`manual build <manual>` of the C++ backend from source. This
 is highly platform dependent, and is described below for each operating system individually. In order to create a Python
 environment for the Python backend, refer to our :ref:`Python <python_setup>` setup instructions.
 
@@ -15,7 +15,7 @@ environment for the Python backend, refer to our :ref:`Python <python_setup>` se
 In order to be able to compile the source code, you have to install the following tools and dependencies:
 
 Build tools
-    - CMake_ for running the build system (at least CMake 3.21 is required)
+    - CMake_ for running the build system (at least CMake 3.22 is required)
     - VCPKG_ for managing the C++ packages
     - `Visual Studio`_ or MinGW_ as a compiler. We recommend `Visual Studio`_ and will use it in further descriptions.
 
@@ -28,21 +28,21 @@ In addition, you need to adjust your path environment variable if you want to us
 In order to smoothly run all the commands described on this page, add the following paths to your path environment
 variable:
 
-======================= ========================================================
+======================= =======================================================
 Tool                    Path to add
-======================= ========================================================
-Cmake                   ``C:\\path\to\cmake\bin``
-VCPKG                   ``C:\\path\to\vcpkg``
-clang-tidy clang-format ``C:\\path\to\VisualStudio\Community\VC\Tools\Llvm\bin``
-======================= ========================================================
+======================= =======================================================
+CMake                   ``C:\path\to\cmake\bin``
+VCPKG                   ``C:\path\to\vcpkg``
+clang-tidy clang-format ``C:\path\to\VisualStudio\Community\VC\Tools\Llvm\bin``
+======================= =======================================================
 
 You can either adjust your environmental variables by using the GUI provided by the operating system, or immediately
-from the command line. If you want to use the Windows GUI, which we highly recommend, enter "environment properties"
-into the search bar and hit Enter. In the System Properties window, click "Environment Variables." Then click on
-environment variables. If you want to setup the environment for all Users, search in the "System Variables", otherwise
-in the "User Variables for UserName" for the variable `Path`. Click on `Path` and then on `Edit`. You now see a list of
-all paths that have been added to `path`. Click on `Add` and enter the paths to the tools you want to use in the command
-prompt. If you want to only change your environment variabels temporarily, you can do so by typing
+from the command line. If you want to use the Windows GUI, which we highly recommend, enter "environment variables" into
+the search bar and select "Edit the system environment variables". In the System Properties window, click "Environment
+Variables...". If you want to set up the environment for all users, search in the "System variables", otherwise in the
+"User variables for UserName" for the variable ``Path``. Click on ``Path`` and then on "Edit". You now see a list of all
+paths that have been added to ``Path``. Click on "New" and enter the paths to the tools you want to use in the command
+prompt. If you want to only change your environment variables temporarily, you can do so by typing
 
 .. code-block:: bash
 
@@ -50,17 +50,17 @@ prompt. If you want to only change your environment variabels temporarily, you c
 
 .. warning::
 
-    Even though the command `setx` allows you to permanently override your path variable from the command line, we
-    highly disencourage you from using it, as it might permamently delete parts of your system environment variable.
+    Even though the command ``setx`` allows you to permanently override your path variable from the command line, we
+    strongly discourage you from using it, as it might permanently delete parts of your system environment variable.
 
-******
- OS X
-******
+*******
+ macOS
+*******
 
 Before compiling the source code, you have to install the following tools and dependencies:
 
 Build tools
-    - CMake_ for running the build system (at least CMake 3.21 is required)
+    - CMake_ for running the build system (at least CMake 3.22 is required)
     - Homebrew_ and the clang compiler.
 
 You can obtain the C++ dependencies from the :github:`github workflow <tree/master/.github/workflows/cpp-backend.yml>`.
@@ -72,12 +72,12 @@ You can obtain the C++ dependencies from the :github:`github workflow <tree/mast
 Before compiling the source code, you have to install the following tools and dependencies:
 
 Build tools
-    - CMake_ for running the build system (at least CMake 3.21 is required)
+    - CMake_ for running the build system (at least CMake 3.22 is required)
     - the distribution's package manager for managing C++ packages
     - gcc or clang compiler for compiling C++
 
-A complete lists of all C++ dependencies dependencies can be found in the Dockerfiles that we use for continuous
-integration. The Dockerfiles are located in the :github:`docker branch <tree/docker/docker>`.
+A complete list of all C++ dependencies can be found in the Dockerfiles that we use for continuous integration. The
+Dockerfiles are located in the :github:`docker branch <tree/docker/docker>`.
 
 .. _cmake: https://cmake.org/download/
 

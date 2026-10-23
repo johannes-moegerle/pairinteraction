@@ -7,7 +7,7 @@
 In order to install the Python library, it is recommended to create a Python virtual environment where you can install
 all dependencies. Therefore, you will first need a package management system to create the Python environment. This way,
 you can avoid package conflicts with packages you may need for different software projects. In general, we recommend
-using uv_ due to its speed, but as many users are familiar with conda_, we also describe its usage as well.
+using uv_ due to its speed, but as many users are familiar with conda_, we also describe its usage.
 
 ****
  uv
@@ -23,7 +23,7 @@ Creating a virtual environment with uv_ can be done via
 
     uv venv .venv --python 3.10
 
-This will create a folder `.venv/` which contains all information on the virtual environment. Note, that you can choose
+This will create a folder ``.venv/`` which contains all information on the virtual environment. Note that you can choose
 a different Python version by simply changing the version number.
 
 To activate the virtual environment, you can run
@@ -44,7 +44,8 @@ In order to install all build dependencies for PairInteraction, run
 
 inside the PairInteraction repository.
 
-If in addition you want to install all dependencies from the `pyproject.toml` file, you can use the following commands:
+If in addition you want to install all dependencies from the ``pyproject.toml`` file, you can use the following
+commands:
 
 .. code-block:: bash
 
@@ -76,12 +77,13 @@ directory of the PairInteraction repository
 
     pip install -r .build_requirements.txt
 
-If in addition you want to install all dependencies from the `pyproject.toml` file, you should use the following
+If in addition you want to install all dependencies from the ``pyproject.toml`` file, you should use the following
 commands:
 
 .. code-block:: bash
 
-    pip-compile pyproject.toml --group dev --output-file=requirements.txt
-    pip install -r requirements.txt
+    pip install --upgrade pip  # installing dependency groups via --group requires pip >= 25.1
+    pip-compile pyproject.toml --output-file=requirements.txt
+    pip install -r requirements.txt --group dev
 
 .. _conda: https://anaconda.org/anaconda/conda

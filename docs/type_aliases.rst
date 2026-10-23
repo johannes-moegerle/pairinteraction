@@ -12,20 +12,20 @@
 .. py:currentmodule:: pairinteraction.ket.ket_pair
 
 .. py:type:: KetAtomTuple
-    :canonical: tuple[KetAtom, KetAtom]
+    :canonical: tuple[KetAtom, KetAtom] | Sequence[KetAtom]
 
-    Tuple of two KetAtom objects.
+    Tuple (or sequence) of two KetAtom objects.
 
 .. py:currentmodule:: pairinteraction.state.state_pair
 
 .. py:type:: StatePairLike
-    :canonical: StatePair | tuple[StateAtom, StateAtom]
+    :canonical: StatePair | tuple[StateAtom, StateAtom] | Sequence[StateAtom]
 
     Accepted state-pair input.
 
 .. py:currentmodule:: pairinteraction.basis.basis_pair
 
 .. py:type:: BasisPairLike
-    :canonical: BasisPair | tuple[BasisAtom, BasisAtom]
+    :canonical: BasisPair | tuple[BasisAtom, BasisAtom] | Sequence[BasisAtom]
 
     Accepted basis-pair input.

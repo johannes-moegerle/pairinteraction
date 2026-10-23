@@ -93,7 +93,7 @@ guide helps to solve problems with the database.
 
       $ pairinteraction database download https://github.com/pairinteraction/database-sqdt/releases/download/v2.0/Rb_v2.0.zip
 
-- If you see access errors (e.g., **"Rate limit reached ..."**), GitHub might have temporary blocked the download of
+- If you see access errors (e.g., **"Rate limit reached ..."**), GitHub might have temporarily blocked the download of
   database tables for unauthenticated users for whom very strict `rate limits`_ apply. The rate limits should typically
   reset within one hour. Alternatively, you can create a `GitHub Personal Access Token`_ for authentication. To make
   PairInteraction use the token, set the environment variable ``GITHUB_TOKEN`` to the value of the token.

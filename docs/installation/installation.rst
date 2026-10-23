@@ -90,7 +90,7 @@ After the installation, we recommend verifying that everything is working:
 If the download command fails, you can also download the databases manually from GitHub and place them in the cache
 directory. For more details on this, see the :ref:`database <database>` section of the documentation.
 
-Note that any `pairinteraction ...` command can also be run via `python3 -m pairinteraction ...`.
+Note that any ``pairinteraction ...`` command can also be run via ``python3 -m pairinteraction ...``.
 
 **Using PairInteraction as a Python Library:** For usage examples of the Python library, visit the :ref:`tutorial-api`
 section of the documentation.

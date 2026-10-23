@@ -7,9 +7,9 @@
 **1. Setup**
 
 For the build via pip, you do not need to build the C++ backend manually, but you can work with Python only. In order to
-so, you first have to :ref:`setup your Python environment <python_setup>`. All Python dependencies are listed within the
-:github:`pyproject.toml <tree/master/pyproject.toml>` file. They are installed automatically when you build the Python
-library using pip_.
+do so, you first have to :ref:`set up your Python environment <python_setup>`. All Python dependencies are listed within
+the :github:`pyproject.toml <tree/master/pyproject.toml>` file. They are installed automatically when you build the
+Python library using pip_.
 
 .. note::
 
@@ -41,7 +41,7 @@ The graphical user interface can now be started by executing:
 
 .. code-block:: bash
 
-    start_pairinteraction_gui
+    pairinteraction
 
 To use the Python library within your code, you can simply run your Python code from inside the virtual environment.
 
@@ -51,10 +51,10 @@ First run
 
 .. code-block:: bash
 
-    pip install . --group tests
+    pip install --group tests
 
-to install the relevant packages for your Python environment. Tests of the Python library and graphical user interface
-can be run by executing:
+to install the relevant packages for your Python environment (installing dependency groups via ``--group`` requires pip
+>= 25.1). Tests of the Python library and graphical user interface can be run by executing:
 
 .. code-block:: bash
 
@@ -84,7 +84,7 @@ Advanced options for developers when building the package:
 |   ``--no-build-isolation``: Avoid re-creations of virtual environments for building the package (to use this you first
     have to install all build dependencies, which are stored inside ``.build_requirements.txt`` so you can install them
     via ``uv pip install -r .build_requirements.txt``).
-|   ``-Cbuild-dir=build``: Specify a build directory and reuse it for faster future builds.
+|   ``-Cbuild-dir=build_pip``: Specify a build directory and reuse it for faster future builds.
 |   ``-v``: Make the output more verbose.
 |   ``-e``: Install the package in editable mode (i.e. changes to the Python files inside PairInteraction are
     immediately effective).

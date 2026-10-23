@@ -45,7 +45,7 @@ Some examples showcasing how to calculate C3 and C6 coefficients and effective H
     examples_python/effective_hamiltonian/effective_hamiltonian_spin_one_half.ipynb
     examples_python/effective_hamiltonian/effective_hamiltonian_spin_one.ipynb
 
-Some examples showcasing the usage of custom green tensors.
+Some examples showcasing the usage of custom Green tensors.
 
 .. nbgallery::
 
