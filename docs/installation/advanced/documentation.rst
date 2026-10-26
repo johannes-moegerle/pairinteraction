@@ -11,13 +11,40 @@ otherwise, all commands described are run from the ``docs`` folder of the PairIn
 In order to install all dependencies to smoothly run Sphinx_, you should first run from the root directory of the
 repository
 
-.. code-block:: bash
+.. tabs::
 
-    pip install --group docs
+    .. group-tab:: uv
 
-This requires pip >= 25.1 and assumes that you have already installed PairInteraction via the :ref:`automatic build
-<automatic>`. Otherwise, run ``pip install -e . --group docs`` instead to build and install it together with the
-documentation dependencies.
+        .. code-block:: bash
+
+            # if PairInteraction is already installed via the automatic build
+            uv pip install --group docs
+
+            # otherwise, build and install PairInteraction together with the documentation dependencies
+            uv pip install -e . --group docs
+
+    .. group-tab:: conda
+
+        .. code-block:: bash
+
+            # if PairInteraction is already installed via the automatic build
+            pip install --group docs
+
+            # otherwise, build and install PairInteraction together with the documentation dependencies
+            pip install -e . --group docs
+
+    .. group-tab:: pip
+
+        .. code-block:: bash
+
+            # if PairInteraction is already installed via the automatic build
+            pip install --group docs
+
+            # otherwise, build and install PairInteraction together with the documentation dependencies
+            pip install -e . --group docs
+
+Here, the first command assumes that you have already installed PairInteraction via the :ref:`automatic build
+<automatic>`. Note that installing dependency groups via ``--group`` requires pip >= 25.1 if you are using conda or pip.
 
 In order to build the documentation once, you can run
 

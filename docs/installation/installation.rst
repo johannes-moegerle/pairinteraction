@@ -11,59 +11,75 @@ and Windows. It is compatible with Python ≥ 3.10.
  Installing from PyPI
 **********************
 
-For most users, we recommend installing PairInteraction from the `Python Package Index (PyPI)`_. You can install
-PairInteraction from the command line via the pip_ package manager:
+For most users, we recommend installing PairInteraction from the `Python Package Index (PyPI)`_. We strongly advise
+performing the installation inside a virtual environment to avoid conflicts with other Python packages. For an easy
+setup, even on systems where Python is not yet installed, we recommend using uv_. This blazingly fast package manager is
+becoming increasingly popular as an alternative to pip_. Alternatively, you can use conda_ or pip_. Select your package
+manager to see the commands for setting up a new virtual environment and installing PairInteraction into it:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install pairinteraction
+    .. group-tab:: uv
 
-.. tip::
+        .. code-block:: bash
 
-    We strongly advise performing the installation inside a virtual environment to avoid conflicts with other Python
-    packages. For an easy setup, even on systems where Python is not yet installed, we recommend using uv_. This
-    blazingly fast package manager is becoming increasingly popular as an alternative to pip_. You can run the following
-    commands to set up uv_ and install PairInteraction in a new virtual environment with a recent version of Python:
+            # install the uv package manager on macOS and Linux
+            curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    .. tabs::
+            # install the uv package manager on Windows
+            powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-        .. tab:: macOS and Linux
+            # create a new virtual environment in the current directory
+            uv venv --python 3.12
 
-            .. code-block:: bash
+            # activate the environment on macOS and Linux
+            source .venv/bin/activate
 
-                # install the uv package manager
-                curl -LsSf https://astral.sh/uv/install.sh | sh
+            # activate the environment on Windows
+            .venv\Scripts\activate
 
-                # create a new virtual environment in the current directory
-                uv venv --python 3.12
+            # install PairInteraction
+            uv pip install pairinteraction
 
-                # activate the environment
-                source .venv/bin/activate
+            # deactivate the environment when you are done using PairInteraction
+            deactivate
 
-                # install PairInteraction
-                uv pip install pairinteraction
+    .. group-tab:: conda
 
-                # deactivate the environment when you are done using PairInteraction
-                deactivate
+        .. code-block:: bash
 
-        .. tab:: Windows
+            # create a new conda environment
+            conda create --name pairinteraction python=3.12
 
-            .. code-block:: bash
+            # activate the environment
+            conda activate pairinteraction
 
-                # install the uv package manager
-                powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+            # install PairInteraction
+            pip install pairinteraction
 
-                # create a new virtual environment in the current directory
-                uv venv --python 3.12
+            # deactivate the environment when you are done using PairInteraction
+            conda deactivate
 
-                # activate the environment
-                .venv\Scripts\activate
+    .. group-tab:: pip
 
-                # install PairInteraction
-                uv pip install pairinteraction
+        .. code-block:: bash
 
-                # deactivate the environment when you are done using PairInteraction
-                deactivate
+            # create a new virtual environment in the current directory (requires Python >= 3.10)
+            python3 -m venv .venv
+
+            # activate the environment on macOS and Linux
+            source .venv/bin/activate
+
+            # activate the environment on Windows
+            .venv\Scripts\activate
+
+            # install PairInteraction
+            pip install pairinteraction
+
+            # deactivate the environment when you are done using PairInteraction
+            deactivate
+
+.. _conda: https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 
 .. _pip: https://pypi.org/project/pip/
 

@@ -14,8 +14,27 @@ Python library using pip_.
 .. note::
 
     If you do not want to modify the source code and just want to use the most recent version of PairInteraction, you
-    can install PairInteraction directly from the :github:`GitHub <>` repository by running ``pip install
-    git+https://github.com/pairinteraction/pairinteraction``.
+    can install PairInteraction directly from the :github:`GitHub <>` repository by running
+
+    .. tabs::
+
+        .. group-tab:: uv
+
+            .. code-block:: bash
+
+                uv pip install git+https://github.com/pairinteraction/pairinteraction
+
+        .. group-tab:: conda
+
+            .. code-block:: bash
+
+                pip install git+https://github.com/pairinteraction/pairinteraction
+
+        .. group-tab:: pip
+
+            .. code-block:: bash
+
+                pip install git+https://github.com/pairinteraction/pairinteraction
 
 If not stated otherwise, all commands should be executed from inside the virtual environment and the root directory of
 the PairInteraction repository.
@@ -26,9 +45,25 @@ the PairInteraction repository.
 
 After cloning the repository and creating the virtual environment, you can build and install the software by running:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install -e .
+    .. group-tab:: uv
+
+        .. code-block:: bash
+
+            uv pip install -e .
+
+    .. group-tab:: conda
+
+        .. code-block:: bash
+
+            pip install -e .
+
+    .. group-tab:: pip
+
+        .. code-block:: bash
+
+            pip install -e .
 
 This will call CMake automatically to build the C++ backend, the Python library, and the graphical user interface. In
 order for pip to find CMake and VCPKG, make sure you have adjusted your environment variables as discussed in our
@@ -49,12 +84,29 @@ To use the Python library within your code, you can simply run your Python code 
 
 First run
 
-.. code-block:: bash
+.. tabs::
 
-    pip install --group tests
+    .. group-tab:: uv
+
+        .. code-block:: bash
+
+            uv pip install --group tests
+
+    .. group-tab:: conda
+
+        .. code-block:: bash
+
+            pip install --group tests
+
+    .. group-tab:: pip
+
+        .. code-block:: bash
+
+            pip install --group tests
 
 to install the relevant packages for your Python environment (installing dependency groups via ``--group`` requires pip
->= 25.1). Tests of the Python library and graphical user interface can be run by executing:
+>= 25.1 if you are using conda or pip). Tests of the Python library and graphical user interface can be run by
+executing:
 
 .. code-block:: bash
 
@@ -77,13 +129,29 @@ information is provided on our page about the :ref:`documentation <Documentation
 
 Advanced options for developers when building the package:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install --no-build-isolation -Cbuild-dir=build_pip -v -e .
+    .. group-tab:: uv
+
+        .. code-block:: bash
+
+            uv pip install --no-build-isolation -Cbuild-dir=build_pip -v -e .
+
+    .. group-tab:: conda
+
+        .. code-block:: bash
+
+            pip install --no-build-isolation -Cbuild-dir=build_pip -v -e .
+
+    .. group-tab:: pip
+
+        .. code-block:: bash
+
+            pip install --no-build-isolation -Cbuild-dir=build_pip -v -e .
 
 |   ``--no-build-isolation``: Avoid re-creations of virtual environments for building the package (to use this you first
-    have to install all build dependencies, which are stored inside ``.build_requirements.txt`` so you can install them
-    via ``uv pip install -r .build_requirements.txt``).
+    have to install all build dependencies, which are stored inside ``.build_requirements.txt``, see the :ref:`Python
+    setup <python_setup>`).
 |   ``-Cbuild-dir=build_pip``: Specify a build directory and reuse it for faster future builds.
 |   ``-v``: Make the output more verbose.
 |   ``-e``: Install the package in editable mode (i.e. changes to the Python files inside PairInteraction are

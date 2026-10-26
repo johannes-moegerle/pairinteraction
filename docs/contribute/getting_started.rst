@@ -103,22 +103,62 @@ necessary steps:
   automatically when we build PairInteraction.
 
 - After taking care of the dependencies, you have two options to build the software. You can either build the complete
-  software using ``pip``:
+  software using your package manager:
 
-  .. code-block:: bash
+  .. tabs::
 
-      pip install -e . --group tests --group docs
+      .. group-tab:: uv
+
+          .. code-block:: bash
+
+              uv pip install -e . --group tests --group docs
+
+      .. group-tab:: conda
+
+          .. code-block:: bash
+
+              pip install -e . --group tests --group docs
+
+      .. group-tab:: pip
+
+          .. code-block:: bash
+
+              pip install -e . --group tests --group docs
 
   Or, you can build solely the C++ backend using ``cmake``. This manual approach is recommended if you are planning to
   contribute to the C++ backend because it allows for a faster build and more fine-grained control.
 
-  .. code-block:: bash
+  .. tabs::
 
-      pip install -r .build_requirements.txt
-      mkdir build
-      cd build
-      cmake ..
-      cmake --build . -j
+      .. group-tab:: uv
+
+          .. code-block:: bash
+
+              uv pip install -r .build_requirements.txt
+              mkdir build
+              cd build
+              cmake ..
+              cmake --build . -j
+
+      .. group-tab:: conda
+
+          .. code-block:: bash
+
+              pip install -r .build_requirements.txt
+              mkdir build
+              cd build
+              cmake ..
+              cmake --build . -j
+
+      .. group-tab:: pip
+
+          .. code-block:: bash
+
+              pip install -r .build_requirements.txt
+              mkdir build
+              cd build
+              cmake ..
+              cmake --build . -j
 
 To ensure your code adheres to the project's coding standards, we highly recommend using the `pre-commit tool`_. Once
 you've installed this tool, integrate it as a pre-commit hook into your local repository with the following command:
